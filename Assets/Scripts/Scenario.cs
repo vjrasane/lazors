@@ -6,15 +6,15 @@ public class Scenario
 	public Dictionary<Coordinate, GamePiece> pieces = new Dictionary<Coordinate, GamePiece> ();
 
 	public Scenario(){
-		pieces.Add (Direction.LEFT, new Turret(Direction.LEFT));
-		pieces.Add (Direction.RIGHT, new Turret(Direction.RIGHT));
+		pieces.Add (Direction.LEFT.toCoordinate(), new Turret(Direction.LEFT));
+		pieces.Add (Direction.RIGHT.toCoordinate(), new Turret(Direction.RIGHT));
 
 		Surround (Direction.LEFT);
 		Surround (Direction.RIGHT);
 	}
 
 	private void Surround(Coordinate pos){
-		foreach (Coordinate c in Direction.ALL) {
+		foreach (Direction c in Direction.ALL) {
 			var target = pos + c;
 			if(!pieces.ContainsKey(target))
 				pieces.Add (target, SafeZone.INSTANCE);

@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
 
 public class Direction : Coordinate {
 
@@ -15,23 +15,27 @@ public class Direction : Coordinate {
 	public static Direction TOP_LEFT = TOP + LEFT;
 	public static Direction DOWN_LEFT = DOWN + LEFT;
 	
-	public static Direction[] ALL = new Direction[8];
+	public static List<Direction> ALL = new List<Direction>();
 	
 	static Direction(){
-		ALL[0] = TOP;
-		ALL [1] = TOP_RIGHT;
-		ALL [2] = RIGHT;
-		ALL [3] = DOWN_RIGHT;
-		ALL [4] = DOWN;
-		ALL [5] = DOWN_LEFT;
-		ALL [6] = LEFT;
-		ALL [7] = TOP_LEFT;
+		ALL.Add (TOP);
+		ALL.Add (TOP_RIGHT);
+		ALL.Add (RIGHT);
+		ALL.Add (DOWN_RIGHT);
+		ALL.Add (DOWN);
+		ALL.Add (DOWN_LEFT);
+		ALL.Add (LEFT);
+		ALL.Add (TOP_LEFT);
 	}
 
 	public float angle = 0.0f;
 
 	public Direction(int x, int y) : base(x,y) {
 		calculateAngle (LEFT_COORD);
+	}
+
+	public Coordinate toCoordinate(){
+		return this.copy ();
 	}
 
 	private void calculateAngle(Coordinate other){
@@ -56,6 +60,8 @@ public class Direction : Coordinate {
 
 	public Direction mirror(bool flipped){
 		int flip = flipped ? 1 : -1;
-		return new Direction(flip * y,  flip * x);
+		int newY = flip * this.x;
+		int newX = flip * this.y;
+		return ALL.Find(d => d.x == newX && d.y == newY);
 	}
 }

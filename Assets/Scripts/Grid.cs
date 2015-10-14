@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
 
 public class Grid : MonoBehaviour {
 
@@ -10,7 +11,13 @@ public class Grid : MonoBehaviour {
 	public GameObject turretPrefab;
 	public GameObject mirrorPrefab;
 
-	//private GameObject[,] squares = new GameObject[Constants.GRID_MAX_SIZE, Constants.GRID_MAX_SIZE];
+	private int maxX = 0;
+	private int minX = 0;
+	private int maxY = 0;
+	private int minY = 0;
+
+	public static int LAZER_MAX_RANGE = Constants.LAZER_MAX_RANGE;
+
 	public Dictionary<Coordinate, GameObject> objects = new Dictionary<Coordinate, GameObject> ();
 	private Dictionary<Coordinate, GridSquare> squares = new Dictionary<Coordinate, GridSquare> ();
 
@@ -41,22 +48,11 @@ public class Grid : MonoBehaviour {
 	}
 
 	void DrawSquares(){
-		foreach(KeyValuePair<Coordinate, GameObject> pair in objects){
-			DrawSquaresAround(pair.Key);
-		}
-	}
+		var startX = minX - Constants.GRID_SQUARE_RANGE;
+		var endX = maxX + Constants.GRID_SQUARE_RANGE;
 
-	void DrawSquaresAround (Coordinate pos)
-	{
-		var centerX = pos.x;
-		var centerY = pos.y;
-
-		var startX = centerX - Constants.GRID_SQUARE_RANGE;
-		var endX = centerX + Constants.GRID_SQUARE_RANGE;
-
-		var startY = centerY - Constants.GRID_SQUARE_RANGE;
-		var endY = centerY + Constants.GRID_SQUARE_RANGE;
-
+		var startY = minY - Constants.GRID_SQUARE_RANGE;
+		var endY = maxY + Constants.GRID_SQUARE_RANGE;
 		for(var x = startX; x <= endX; x++){
 			for(var y = startY; y <= endY; y++){
 
@@ -89,12 +85,12 @@ public class Grid : MonoBehaviour {
 	}
 
 	private GameObject Put(Coordinate pos, GameObject prefab){
-		var obj = InstantiateAt (pos, prefab);
+		var obj = InstantiateAt (pos, prefab, true);
 		
 		squares.Remove (pos);
 		objects.Add (pos, obj);
-		
-		DrawSquaresAround (pos);
+
+		DrawSquares ();
 
 		return obj;
 	}
@@ -103,7 +99,11 @@ public class Grid : MonoBehaviour {
 		turrets.ForEach(t => t.Reroute(change, flipped));
 	}
 
-	private GameObject InstantiateAt(Coordinate position, GameObject prefab){
+	private GameObject InstantiateAt(Coordinate position, GameObject prefab) {
+		return InstantiateAt (position, prefab, false);
+	}
+
+	private GameObject InstantiateAt(Coordinate position, GameObject prefab, bool checkBounds){
 		var obj = Instantiate (prefab);
 		obj.transform.parent = this.transform;
 		obj.transform.localPosition = GetPosition (position);
@@ -114,7 +114,24 @@ public class Grid : MonoBehaviour {
 			positional.grid = this;
 		}
 
+		if (checkBounds)
+			CheckBounds (position);
+
 		return obj;
+	}
+
+	void CheckBounds (Coordinate position)
+	{
+		maxX = Mathf.Max (position.x, maxX);
+		minX = Mathf.Min (position.x, minX);
+		maxY = Mathf.Max (position.y, maxY);
+		minY = Mathf.Min (position.y, minY);
+
+		LAZER_MAX_RANGE = GetMaxValue (maxX, -minX, maxY, -minY, LAZER_MAX_RANGE);
+	}
+
+	int GetMaxValue(params int[] values){
+		return values.Max ();
 	}
 
 	Vector2 GetPosition (Coordinate pos)
@@ -136,10 +153,10 @@ public class Grid : MonoBehaviour {
 
 			if(piece.GetType() == typeof(Scenario.SafeZone)){
 				// No need to translate here
-				objects.Add (target, InstantiateAt(target, safeZonePrefab));
+				objects.Add (target, InstantiateAt(target, safeZonePrefab, true));
 			} else if(piece.GetType() == typeof(Scenario.Turret)){
 				var facing = ((Scenario.Turret)piece).facing;
-				var turret = InstantiateAt(target, turretPrefab);
+				var turret = InstantiateAt(target, turretPrefab, true);
 				var turretScript = turret.GetComponent<Turret>();
 				turretScript.RotateGun(facing);
 

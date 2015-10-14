@@ -106,7 +106,7 @@ public class Turret : Positional {
 							lazerPosition = GetNextLazerPosition (currentLazerSection.facing);
 							lazerState = Lazer.State.Straight;
 						}
-					} else if (exists || currentRange < Constants.LAZER_MAX_RANGE) {
+					} else if (exists || currentRange < Grid.LAZER_MAX_RANGE) {
 						GameObject obj;
 						grid.objects.TryGetValue (TranslateCoordinate (lazerPosition), out obj);
 						if (obj != null && !obj.tag.Equals("SafeZone")) {
@@ -144,18 +144,17 @@ public class Turret : Positional {
 		}
 	}
 
+	bool ObjectExists(Lazer lazer){
+		return ObjectExists (lazer.position, lazer.facing);
+	}
+
 	bool ObjectExists (Coordinate pos, Direction dir)
 	{
 		List<Coordinate> coordinates = new List<Coordinate>(grid.objects.Keys);
-		if (dir.Equals (Direction.TOP)) {
-			return coordinates.Exists(c => c.y > pos.y);
-		} else if(dir.Equals (Direction.DOWN)){
-			return coordinates.Exists(c => c.y < pos.y);
-		} else if(dir.Equals (Direction.LEFT)){
-			return coordinates.Exists(c => c.x < pos.x);
-		}else if(dir.Equals (Direction.RIGHT)){
-			return coordinates.Exists(c => c.x > pos.x);
-		}
+		if (dir.y != 0)
+			return coordinates.Exists (c => pos.x == c.x && dir.y * c.y > dir.y * pos.y);
+		else if (dir.x != 0)
+			return coordinates.Exists (c => pos.y == c.y && dir.x * c.x > dir.x * pos.x);
 
 		return false;
 	}
@@ -215,8 +214,18 @@ public class Turret : Positional {
 	{
 		Coordinate translated = ReverseTranslate (change);
 		int index = lazer.FindIndex(s => s.position.Equals(translated));
-		if (index < 0)
+		if (index < 0) {
+			var lastLazer = lazer[lazer.Count - 1];
+			if(ObjectExists(TranslateCoordinate(lastLazer.position), lastLazer.facing)){
+				currentLazerSection = lastLazer;
+				lazerPosition = GetNextLazerPosition(currentLazerSection.facing);
+				lazerDirection = currentLazerSection.facing;
+				currentRange = 0;
+				firing = true;
+			}
 			return;
+		}
+			
 
 		index++;
 		List<Lazer> destroy = lazer.GetRange(index, lazer.Count - index);

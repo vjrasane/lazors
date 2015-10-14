@@ -17,6 +17,10 @@ public class Coordinate : object {
 		this.y = (int)vec.y;
 	}
 
+	public Coordinate copy(){
+		return new Coordinate (x, y);
+	}
+
 	public Vector2 asVec2(){
 		return new Vector2(x,y);
 	}

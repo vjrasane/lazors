@@ -20,7 +20,8 @@ public class Turret : Positional {
 	private Lazer currentLazerSection;
 	private int currentRange = 0;
 
-	private List<Lazer> lazer = new List<Lazer>();
+	private List<Lazer> lazerPath = new List<Lazer>();
+	private List<GameObject> lazerPool = new List<GameObject> ();
 
 	private float impactLazerLength;
 
@@ -52,8 +53,8 @@ public class Turret : Positional {
 	}
 
 	private void ClearLazer(){
-		lazer.ForEach (l => Destroy (l.gameObject));
-		lazer.Clear ();
+		lazerPath.ForEach (l => MoveToPool(l));
+		lazerPath.Clear ();
 		lazerState = Lazer.State.Straight;
 		currentLazerSection = null;
 		currentRange = 0;
@@ -197,7 +198,7 @@ public class Turret : Positional {
 	}
 
 	private Coordinate GetNextLazerPosition(Coordinate dir){
-		return lazer[lazer.Count - 1].position + dir;
+		return lazerPath[lazerPath.Count - 1].position + dir;
 	}
 
 	private Coordinate TranslateCoordinate(Coordinate pos){
@@ -223,7 +224,14 @@ public class Turret : Positional {
 	}
 	
 	private Lazer StartLazerAt(Coordinate pos, Direction facing, float maxLength){
-		var lazer = Instantiate (lazerPrefab);
+		GameObject lazer;
+		//lazer = Instantiate (lazerPrefab);
+		if (lazerPool.Count <= 0)
+			lazer = Instantiate (lazerPrefab);
+		else {
+			lazer = GetFromPool();
+		}
+
 		lazer.transform.parent = this.transform;
 		lazer.transform.localPosition = Vector2.zero;
 		lazer.transform.Translate(pos.asVec3() * Lazer.length);
@@ -234,7 +242,7 @@ public class Turret : Positional {
 		lazerScript.maxLength = maxLength;
 		lazerScript.position = pos;
 		
-		this.lazer.Add (lazerScript);
+		this.lazerPath.Add (lazerScript);
 		
 		return lazerScript;
 	}
@@ -249,13 +257,13 @@ public class Turret : Positional {
 	 
 	public void Reroute (Coordinate change, bool flipped)
 	{
-		if (lazer.Count <= 0)
+		if (lazerPath.Count <= 0)
 			return;
 
 		Coordinate translated = ReverseTranslate (change);
-		int index = lazer.FindIndex(s => s.position.Equals(translated));
+		int index = lazerPath.FindIndex(s => s.position.Equals(translated));
 		if (index < 0) {
-			var lastLazer = lazer[lazer.Count - 1];
+			var lastLazer = lazerPath[lazerPath.Count - 1];
 			if(lazerState != Lazer.State.Impact && ObjectExists(TranslateCoordinate(lastLazer.position), lastLazer.facing)){
 				currentLazerSection = lastLazer;
 				lazerPosition = GetNextLazerPosition(currentLazerSection.facing);
@@ -268,12 +276,12 @@ public class Turret : Positional {
 			
 
 		index++;
-		List<Lazer> destroy = lazer.GetRange(index, lazer.Count - index);
-		lazer.RemoveRange(index, lazer.Count - index);
-		destroy.ForEach(s => Destroy(s.gameObject));
+		List<Lazer> destroy = lazerPath.GetRange(index, lazerPath.Count - index);
+		lazerPath.RemoveRange(index, lazerPath.Count - index);
+		destroy.ForEach(s => MoveToPool(s));
 
-		if (lazer.Count > 0) {
-			currentLazerSection = lazer [lazer.Count - 1];
+		if (lazerPath.Count > 0) {
+			currentLazerSection = lazerPath [lazerPath.Count - 1];
 			currentLazerSection.maxLength = impactLazerLength;
 			currentLazerSection.SetLength (impactLazerLength);
 
@@ -283,14 +291,30 @@ public class Turret : Positional {
 			lazerState = flipped ? Lazer.State.FlippedTurn : Lazer.State.Turn;
 
 			currentLazerSection.SetLayerOrder (lazerState, true);
-			foreach (Transform child in currentLazerSection.transform)
-				if (!child.tag.Equals ("Sprite"))
-					Destroy (child.gameObject);
+			currentLazerSection.ClearChildren();
 
 			currentRange = 0;
 			firing = true;
 		} else {
 			Fire ();
 		}
+	}
+
+	private void MoveToPool(Lazer lazer){
+		lazer.transform.localRotation = Quaternion.identity;
+		lazer.transform.localPosition = Vector2.zero;
+		lazer.ResetSpritePosition ();
+		lazer.ClearChildren ();
+		lazer.gameObject.SetActive (false);
+
+		lazerPool.Add (lazer.gameObject);
+	}
+
+	private GameObject GetFromPool(){
+		var lazer = lazerPool[0].gameObject;
+		lazer.SetActive(true);
+		lazerPool.RemoveAt (0);
+
+		return lazer;
 	}
 }

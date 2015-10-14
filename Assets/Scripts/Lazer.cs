@@ -25,6 +25,17 @@ public class Lazer : Positional {
 		}
 	}
 
+	public void ClearChildren(){
+		foreach (Transform child in transform)
+			if (!child.tag.Equals ("Sprite"))
+				Destroy (child.gameObject);
+	}
+
+	public void ResetSpritePosition(){
+		sprite.transform.localPosition = Vector2.zero;
+		sprite.transform.Translate (new Vector3 (Lazer.length / 2,0,0));
+	}
+
 	public void SetLength (float percentage){
 		this.currentLength = percentage;
 		this.sprite.transform.localScale = new Vector2(percentage, 1);

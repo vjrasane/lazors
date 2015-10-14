@@ -107,6 +107,7 @@ public class Turret : Positional {
 						if(lazerState == Lazer.State.Impact){
 							firing = false;
 							EndGame();
+							break;
 							// TODO END GAME HERE;
 						} else {
 							currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, impactLazerLength);
@@ -255,7 +256,7 @@ public class Turret : Positional {
 		int index = lazer.FindIndex(s => s.position.Equals(translated));
 		if (index < 0) {
 			var lastLazer = lazer[lazer.Count - 1];
-			if(ObjectExists(TranslateCoordinate(lastLazer.position), lastLazer.facing)){
+			if(lazerState != Lazer.State.Impact && ObjectExists(TranslateCoordinate(lastLazer.position), lastLazer.facing)){
 				currentLazerSection = lastLazer;
 				lazerPosition = GetNextLazerPosition(currentLazerSection.facing);
 				lazerDirection = currentLazerSection.facing;

@@ -6,7 +6,7 @@ public class Lazer : Positional {
 	public enum State { Straight, Turn, FlippedTurn, Impact }
 
 	private GameObject sprite;
-	private SpriteRenderer renderer;
+	private SpriteRenderer spriteRenderer;
 
 	public Direction facing = Direction.LEFT;
 
@@ -19,9 +19,9 @@ public class Lazer : Positional {
 	// Use this for initialization
 	void Awake () {
 		this.sprite = this.transform.FindChild("sprite").gameObject;
-		this.renderer = sprite.GetComponent<SpriteRenderer> ();
+		this.spriteRenderer = sprite.GetComponent<SpriteRenderer> ();
 		if (length == 0.0f) {
-			length = this.renderer.bounds.size.x;
+			length = this.spriteRenderer.bounds.size.x;
 		}
 	}
 
@@ -87,11 +87,11 @@ public class Lazer : Positional {
 
 	void SendToBack ()
 	{
-		this.renderer.sortingOrder = -2;
+		this.spriteRenderer.sortingOrder = -2;
 	}
 
 	void BringToFront ()
 	{
-		this.renderer.sortingOrder = 1;
+		this.spriteRenderer.sortingOrder = 1;
 	}
 }

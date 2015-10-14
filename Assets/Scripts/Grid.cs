@@ -57,13 +57,14 @@ public class Grid : MonoBehaviour {
 			for(var y = startY; y <= endY; y++){
 
 				var coordinate = new Coordinate (x, y);
-				if(!objects.ContainsKey(coordinate) && !squares.ContainsKey(coordinate)){
+				if(!squares.ContainsKey(coordinate)){
 					var squareObj = InstantiateAt(coordinate, squarePrefab);
 
 					var gridSquare = squareObj.GetComponent<GridSquare>();
-					gridSquare.grid = this;
 
+					gridSquare.grid = this;
 					gridSquare.position = coordinate;
+					gridSquare.SetDisabled(objects.ContainsKey(coordinate));
 
 					squares.Add(coordinate, gridSquare);
 				}
@@ -86,8 +87,7 @@ public class Grid : MonoBehaviour {
 
 	private GameObject Put(Coordinate pos, GameObject prefab){
 		var obj = InstantiateAt (pos, prefab, true);
-		
-		squares.Remove (pos);
+
 		objects.Add (pos, obj);
 
 		DrawSquares ();

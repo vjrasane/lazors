@@ -3,18 +3,25 @@ using System.Collections;
 
 public class GridSquare : Positional {
 
+	// Shitty Unity doesn't actually provide access to renderer/collider but complains about using them as a variable...
+	#pragma warning disable 0108
 	private SpriteRenderer renderer;
+	private BoxCollider2D collider;
 
-//	public Sprite inactive;
-//	public Sprite active;
+	public bool full = false;
 
 	public Color activeColor;
 	public Color inactiveColor;
 
-	// Use this for initialization
-	void Start () {
+	void Awake(){
 		this.renderer = this.GetComponent<SpriteRenderer> ();
 		this.renderer.color = inactiveColor;
+		this.collider = this.GetComponent<BoxCollider2D> ();
+	}
+
+	// Use this for initialization
+	void Start () {
+
 	}
 
 	void OnMouseDown(){
@@ -22,17 +29,14 @@ public class GridSquare : Positional {
 	}
 
 	void OnMouseOver(){
-		//this.renderer.enabled = true;
 		this.renderer.color = activeColor;
 		HandleClick ();
 	}
 
 	void OnMouseExit(){
-		//this.renderer.enabled = false;
 		this.renderer.color = inactiveColor;
 	}
-	
-	// Update is called once per frame
+
 	void Update () {
 	
 	}
@@ -40,12 +44,16 @@ public class GridSquare : Positional {
 	void HandleClick ()
 	{
 		if (Input.GetMouseButtonDown (0)) {
+			SetDisabled(true);
 			grid.PutMirror (position, false);
-			Destroy (this.gameObject);
-		} else if (Input.GetMouseButtonDown (1)) {
-			grid.PutSafeZone (position);
-			Destroy (this.gameObject);
-		}
 
+		} else if (Input.GetMouseButtonDown (1)) {
+			SetDisabled(true);
+			grid.PutSafeZone (position);
+		}
+	}
+
+	public void SetDisabled(bool disabled){
+		this.collider.enabled = !disabled;
 	}
 }

@@ -10,16 +10,11 @@ public class CameraController : MonoBehaviour {
 
 	private Vector3 oldPosition;
 
-	private float cameraZ;
-	private Vector3 cameraZVector;
-
 	private Rigidbody2D rigidBody;
 
 	// Use this for initialization
 	void Start () {
 		Camera.main.orthographicSize = Constants.CAMERA_DEFAULT_ZOOM;
-		cameraZ = Camera.main.transform.position.z;
-		cameraZVector = new Vector3 (0, 0, cameraZ);
 
 		rigidBody = this.gameObject.GetComponent<Rigidbody2D> ();
 		rigidBody.drag = Constants.CAMERA_MOVE_DRAG;

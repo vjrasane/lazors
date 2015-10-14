@@ -8,7 +8,7 @@ public class Lazer : Positional {
 	private GameObject sprite;
 	private SpriteRenderer renderer;
 
-	public Coordinate facing = Coordinate.LEFT;
+	public Direction facing = Direction.LEFT;
 
 	public static float length = 0.0f;
 
@@ -34,8 +34,8 @@ public class Lazer : Positional {
 		return currentLength;
 	}
 
-	public void Rotate(Coordinate facing){
-		this.transform.Rotate (new Vector3(0,0,this.facing.angle (facing)));
+	public void Rotate(Direction facing){
+		this.transform.Rotate (new Vector3(0,0,facing.angle));
 		this.facing = facing;
 	}
 	
@@ -65,8 +65,6 @@ public class Lazer : Positional {
 			front = incoming ? front : !front;
 			return front;
 		}
-
-		return false;
 	}
 
 	void SendTo(bool front){

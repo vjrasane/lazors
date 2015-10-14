@@ -4,7 +4,7 @@ using System.Collections.Generic;
 public class Turret : Positional {
 
 	private Transform gun;
-	private Coordinate facing = Coordinate.LEFT;
+	private Direction facing = Direction.LEFT;
 
 	public GameObject lazerPrefab;
 	public GameObject lazerImpactPrefab;
@@ -36,8 +36,8 @@ public class Turret : Positional {
 		Fire ();
 	}
 
-	public void RotateGun(Coordinate facing){
-		gun.Rotate (new Vector3(0,0,this.facing.angle (facing)));
+	public void RotateGun(Direction facing){
+		gun.Rotate (new Vector3(0,0,facing.angle));
 		this.facing = facing;
 	}
 
@@ -61,7 +61,7 @@ public class Turret : Positional {
 		HandleFiring ();
 	}
 
-	private Coordinate lazerDirection;
+	private Direction lazerDirection;
 	private Coordinate lazerPosition;
 
 	private Lazer.State lazerState = Lazer.State.Straight;
@@ -144,16 +144,16 @@ public class Turret : Positional {
 		}
 	}
 
-	bool ObjectExists (Coordinate pos, Coordinate dir)
+	bool ObjectExists (Coordinate pos, Direction dir)
 	{
 		List<Coordinate> coordinates = new List<Coordinate>(grid.objects.Keys);
-		if (dir.Equals (Coordinate.TOP)) {
+		if (dir.Equals (Direction.TOP)) {
 			return coordinates.Exists(c => c.y > pos.y);
-		} else if(dir.Equals (Coordinate.DOWN)){
+		} else if(dir.Equals (Direction.DOWN)){
 			return coordinates.Exists(c => c.y < pos.y);
-		} else if(dir.Equals (Coordinate.LEFT)){
+		} else if(dir.Equals (Direction.LEFT)){
 			return coordinates.Exists(c => c.x < pos.x);
-		}else if(dir.Equals (Coordinate.RIGHT)){
+		}else if(dir.Equals (Direction.RIGHT)){
 			return coordinates.Exists(c => c.x > pos.x);
 		}
 
@@ -172,7 +172,7 @@ public class Turret : Positional {
 		return pos - this.position;
 	}
 
-	private Lazer StartLazerAt(Coordinate pos, Coordinate facing){
+	private Lazer StartLazerAt(Coordinate pos, Direction facing){
 		return StartLazerAt (pos, facing, 1);
 	}
 
@@ -186,7 +186,7 @@ public class Turret : Positional {
 		return lazerImpact;
 	}
 	
-	private Lazer StartLazerAt(Coordinate pos, Coordinate facing, float maxLength){
+	private Lazer StartLazerAt(Coordinate pos, Direction facing, float maxLength){
 		var lazer = Instantiate (lazerPrefab);
 		lazer.transform.parent = this.transform;
 		lazer.transform.localPosition = Vector2.zero;

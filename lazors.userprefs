@@ -1,15 +1,16 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="MonoDevelop.Default" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\Grid.cs">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\Turret.cs">
     <Files>
-      <File FileName="Assets\Scripts\Turret.cs" Line="106" Column="74" />
+      <File FileName="Assets\Scripts\Turret.cs" Line="166" Column="11" />
       <File FileName="Assets\Scripts\Direction.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\Coordinate.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\CameraController.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\Constants.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\Lazer.cs" Line="1" Column="1" />
       <File FileName="Assets\Scripts\Scenario.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\Grid.cs" Line="130" Column="75" />
+      <File FileName="Assets\Scripts\Grid.cs" Line="120" Column="14" />
+      <File FileName="Assets\Scripts\Mirror.cs" Line="1" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

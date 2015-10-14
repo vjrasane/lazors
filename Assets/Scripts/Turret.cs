@@ -8,8 +8,14 @@ public class Turret : Positional {
 
 	public GameObject lazerPrefab;
 	public GameObject lazerImpactPrefab;
+	public GameObject explosionPrefab;
+	public GameObject smokePrefab;
 
-	private bool firing;
+	public Color destroyedColor;
+
+	private bool destroyed = false;
+	private bool firing = false;
+	private bool active = true;
 
 	private Lazer currentLazerSection;
 	private int currentRange = 0;
@@ -29,11 +35,15 @@ public class Turret : Positional {
 		lazerSprite.Translate (new Vector3 (Lazer.length / 2,0,0));
 
 		impactLazerLength = 0.5f;
-		//- lazerTurnSize / Lazer.length;
 	}
 
 	void Start(){
 		Fire ();
+	}
+
+	void Fire(){
+		ClearLazer ();
+		firing = active;
 	}
 
 	public void RotateGun(Direction facing){
@@ -41,17 +51,17 @@ public class Turret : Positional {
 		this.facing = facing;
 	}
 
-	public void Fire(){
+	private void ClearLazer(){
 		lazer.ForEach (l => Destroy (l.gameObject));
 		lazer.Clear ();
 		lazerState = Lazer.State.Straight;
 		currentLazerSection = null;
 		currentRange = 0;
-		firing = true;
 	}
 
 	void Update(){
 		if (Input.GetKeyDown (KeyCode.Space)) {
+			active = !active;
 			Fire ();
 		}
 	}
@@ -96,6 +106,7 @@ public class Turret : Positional {
 						AddLazerImpact (currentLazerSection, lazerState);
 						if(lazerState == Lazer.State.Impact){
 							firing = false;
+							EndGame();
 							// TODO END GAME HERE;
 						} else {
 							currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, impactLazerLength);
@@ -142,6 +153,31 @@ public class Turret : Positional {
 			}
 			excess = Mathf.Max (excess, 0);
 		}
+	}
+
+	void EndGame ()
+	{
+		var obj = grid.objects[TranslateCoordinate (lazerPosition)];
+		obj.GetComponent<Turret> ().Explode();
+
+	}
+
+	public void Explode(){
+		if (this.destroyed)
+			return;
+
+		var explosion = Instantiate (explosionPrefab);
+		explosion.transform.position = this.transform.position;
+
+		var smoke = Instantiate (smokePrefab);
+		Vector3 pos = this.transform.position;
+		pos.z = -1;
+		smoke.transform.position = pos;
+
+		this.GetComponent<SpriteRenderer> ().color = destroyedColor;
+		this.gun.GetComponent<SpriteRenderer> ().color = destroyedColor;
+
+		this.destroyed = true;
 	}
 
 	bool ObjectExists(Lazer lazer){
@@ -212,6 +248,9 @@ public class Turret : Positional {
 	 
 	public void Reroute (Coordinate change, bool flipped)
 	{
+		if (lazer.Count <= 0)
+			return;
+
 		Coordinate translated = ReverseTranslate (change);
 		int index = lazer.FindIndex(s => s.position.Equals(translated));
 		if (index < 0) {
@@ -235,7 +274,7 @@ public class Turret : Positional {
 		if (lazer.Count > 0) {
 			currentLazerSection = lazer [lazer.Count - 1];
 			currentLazerSection.maxLength = impactLazerLength;
-			currentLazerSection.SetLength(impactLazerLength);
+			currentLazerSection.SetLength (impactLazerLength);
 
 			lazerPosition = currentLazerSection.position;
 	
@@ -243,13 +282,14 @@ public class Turret : Positional {
 			lazerState = flipped ? Lazer.State.FlippedTurn : Lazer.State.Turn;
 
 			currentLazerSection.SetLayerOrder (lazerState, true);
-			foreach(Transform child in currentLazerSection.transform)
-				if(!child.tag.Equals("Sprite"))
-				   Destroy (child.gameObject);
+			foreach (Transform child in currentLazerSection.transform)
+				if (!child.tag.Equals ("Sprite"))
+					Destroy (child.gameObject);
 
 			currentRange = 0;
 			firing = true;
-		} else
+		} else {
 			Fire ();
+		}
 	}
 }

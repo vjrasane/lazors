@@ -147,6 +147,7 @@ public class Grid : MonoBehaviour {
 			scenario = new Scenario();
 		}
 
+		int playerCounter = 1;
 		foreach (KeyValuePair<Coordinate, Scenario.GamePiece> pair in scenario.pieces) {
 			var piece = pair.Value;
 			var target = pair.Key;
@@ -158,6 +159,7 @@ public class Grid : MonoBehaviour {
 				var facing = ((Scenario.Turret)piece).facing;
 				var turret = InstantiateAt(target, turretPrefab, true);
 				var turretScript = turret.GetComponent<Turret>();
+				turretScript.playerNumber = playerCounter++;
 				turretScript.RotateGun(facing);
 
 				turrets.Add(turretScript);

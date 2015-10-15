@@ -25,7 +25,14 @@ public class CameraController : MonoBehaviour {
 		HandleMove ();
 	}
 
-	void HandleZoom ()
+	void Update(){
+		if(Input.GetKeyDown(KeyCode.S)){
+			Shake ();
+		}
+		HandleShake ();
+	}
+
+		void HandleZoom ()
 	{
 		if (Input.GetAxis ("Mouse ScrollWheel") < 0)// back
 		{
@@ -55,5 +62,31 @@ public class CameraController : MonoBehaviour {
 		}
 
 		oldPosition = pos;
+	}
+
+	private bool shaking = false;
+	private Vector3 initShakePosition = Vector3.zero;
+	private float shake = 0;
+
+	public void Shake(){
+		initShakePosition = this.transform.position;
+		shaking = true;
+		shake = Constants.EXPLOSION_SHAKE_DURATION;
+	}
+
+	void HandleShake ()
+	{
+		if (shaking) {
+			this.transform.position = initShakePosition;
+			if (shake > 0) {
+				Vector3 rand = Random.insideUnitCircle * Constants.EXPLOSION_SHAKE_MAGNITUDE;
+				this.transform.Translate(rand);
+				shake -= Time.deltaTime;
+			}
+			else {
+				shake = 0.0f;
+				shaking = false;
+			}
+		}
 	}
 }

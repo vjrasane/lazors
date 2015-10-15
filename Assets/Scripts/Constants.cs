@@ -20,4 +20,7 @@ public class Constants {
 
 	public static int LAZER_MAX_RANGE = 20;
 	public static float LAZER_SPEED = 10f;
+
+	public static float EXPLOSION_SHAKE_DURATION = 0.3f;
+	public static float EXPLOSION_SHAKE_MAGNITUDE = 0.1f;
 }

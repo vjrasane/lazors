@@ -5,8 +5,15 @@ public class Lazer : Positional {
 
 	public enum State { Straight, Turn, FlippedTurn, Impact }
 
+	private GameObject impact;
+	public GameObject lazerImpactPrefab;
+
 	private GameObject sprite;
-	private SpriteRenderer spriteRenderer;
+
+	public Color lazerColor;
+
+	private SpriteRenderer beamRenderer;
+	private SpriteRenderer hilightRenderer;
 
 	public Direction facing = Direction.LEFT;
 
@@ -16,24 +23,45 @@ public class Lazer : Positional {
 
 	public float maxLength;
 
+	public int layerOrderMultiplier = 1;
+
 	// Use this for initialization
 	void Awake () {
 		this.sprite = this.transform.FindChild("sprite").gameObject;
-		this.spriteRenderer = sprite.GetComponent<SpriteRenderer> ();
+		this.beamRenderer = sprite.GetComponent<SpriteRenderer> ();
+		this.hilightRenderer = sprite.transform.FindChild("hilight").GetComponent<SpriteRenderer> ();
+
+		this.hilightRenderer.color = lazerColor;
+
 		if (length == 0.0f) {
-			length = this.spriteRenderer.bounds.size.x;
+			length = this.beamRenderer.bounds.size.x;
 		}
 	}
 
-	public void ClearChildren(){
-		foreach (Transform child in transform)
-			if (!child.tag.Equals ("Sprite"))
-				Destroy (child.gameObject);
+	public void DisableImpact(){
+		if(impact != null)
+			this.impact.SetActive (false);
 	}
 
-	public void ResetSpritePosition(){
+	public void AddImpact(State state){
+		if (this.impact == null) {
+			impact = Instantiate(lazerImpactPrefab);
+			impact.transform.parent = this.transform;
+			impact.transform.localPosition = Vector2.zero;
+			this.impact.transform.FindChild("hilight").GetComponent<SpriteRenderer>().color = lazerColor;
+		}
+		this.impact.SetActive (true);
+
+		SetImpactLayerOrder (state);
+	}
+
+	public void DisableOffset(){
 		sprite.transform.localPosition = Vector2.zero;
 		sprite.transform.Translate (new Vector3 (Lazer.length / 2,0,0));
+	}
+
+	public void EnableOffset(){
+		sprite.transform.localPosition = Vector2.zero;
 	}
 
 	public void SetLength (float percentage){
@@ -78,6 +106,17 @@ public class Lazer : Positional {
 		}
 	}
 
+	void SetImpactLayerOrder (Lazer.State state)
+	{
+		// Lazer is INCOMING here
+		var circleRenderer = this.impact.GetComponent<SpriteRenderer> ();
+		var hilightRenderer = this.impact.transform.FindChild("hilight").GetComponent<SpriteRenderer> ();
+		
+		var front = IsFront (facing, state, true);
+		circleRenderer.sortingOrder = front ? layerOrderMultiplier * 4 - 1 : 2 - layerOrderMultiplier * 4;
+		hilightRenderer.sortingOrder = front ? layerOrderMultiplier * 4 : 3 - layerOrderMultiplier * 4;
+	}
+
 	void SendTo(bool front){
 		if (front)
 			BringToFront ();
@@ -85,13 +124,24 @@ public class Lazer : Positional {
 			SendToBack ();
 	}
 
-	void SendToBack ()
+	public void SendToBack ()
 	{
-		this.spriteRenderer.sortingOrder = -2;
+		this.beamRenderer.sortingOrder = -layerOrderMultiplier * 4;
+		this.hilightRenderer.sortingOrder = 1 - layerOrderMultiplier * 4;
 	}
 
-	void BringToFront ()
+	public void BringToFront ()
 	{
-		this.spriteRenderer.sortingOrder = 1;
+		this.beamRenderer.sortingOrder = layerOrderMultiplier * 4 - 3;
+		this.hilightRenderer.sortingOrder = layerOrderMultiplier * 4 - 2;
+	}
+
+	public void ResetLayer(){
+		SetLayer ("LazerLevel");
+	}
+
+	public void SetLayer(string name){
+		this.beamRenderer.sortingLayerName = name;
+		this.hilightRenderer.sortingLayerName = name;
 	}
 }

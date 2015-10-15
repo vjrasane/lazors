@@ -7,11 +7,14 @@ public class Turret : Positional {
 	private Direction facing = Direction.LEFT;
 
 	public GameObject lazerPrefab;
-	public GameObject lazerImpactPrefab;
 	public GameObject explosionPrefab;
 	public GameObject smokePrefab;
 
+	public Color playerColor;
 	public Color destroyedColor;
+
+	private SpriteRenderer baseRenderer;
+	private SpriteRenderer gunRenderer;
 
 	private bool destroyed = false;
 	private bool firing = false;
@@ -25,15 +28,23 @@ public class Turret : Positional {
 
 	private float impactLazerLength;
 
+	public int playerNumber = 0;
+
 	// Use this for initialization
 	void Awake () {
 		gun = this.transform.FindChild ("gun");
+
+		this.baseRenderer = this.GetComponent<SpriteRenderer> ();
+		this.gunRenderer = this.gun.GetComponent<SpriteRenderer> ();
+
+		baseRenderer.color = playerColor;
+		gunRenderer.color = playerColor;
 
 		var lazerSprite = lazerPrefab.transform.FindChild ("sprite");
 		lazerSprite.localPosition = Vector2.zero;
 
 		Lazer.length = lazerSprite.GetComponent<SpriteRenderer>().bounds.size.x;
-		lazerSprite.Translate (new Vector3 (Lazer.length / 2,0,0));
+		lazerSprite.transform.Translate (new Vector3 (Lazer.length / 2,0,0));
 
 		impactLazerLength = 0.5f;
 	}
@@ -88,7 +99,14 @@ public class Turret : Positional {
 		if (firing) {
 
 			if (currentLazerSection == null) {
-				currentLazerSection = StartLazerAt (facing, facing);
+				if(lazerPath.Count <= 0){
+					currentLazerSection = StartLazerAt ( Direction.ZERO, facing);
+					currentLazerSection.EnableOffset();
+					currentLazerSection.maxLength = impactLazerLength;
+					currentLazerSection.SetLayer("AccessoryBelow");
+				} else {
+					currentLazerSection = StartLazerAt (facing, facing);
+				}
 				lazerPosition = GetNextLazerPosition (currentLazerSection.facing);
 				lazerDirection = currentLazerSection.facing;
 			}
@@ -104,7 +122,7 @@ public class Turret : Positional {
 			} else {
 				do {
 					if (lazerState != Lazer.State.Straight) {
-						AddLazerImpact (currentLazerSection, lazerState);
+						currentLazerSection.AddImpact(lazerState);
 						if(lazerState == Lazer.State.Impact){
 							firing = false;
 							EndGame();
@@ -113,7 +131,7 @@ public class Turret : Positional {
 						} else {
 							currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, impactLazerLength);
 
-							currentLazerSection.transform.FindChild ("sprite").localPosition = Vector2.zero;
+							currentLazerSection.EnableOffset();
 							currentLazerSection.SetLayerOrder (lazerState, false);
 							
 							lazerPosition = GetNextLazerPosition (currentLazerSection.facing);
@@ -171,13 +189,15 @@ public class Turret : Positional {
 		var explosion = Instantiate (explosionPrefab);
 		explosion.transform.position = this.transform.position;
 
+		Camera.main.GetComponent<CameraController> ().Shake ();
+
 		var smoke = Instantiate (smokePrefab);
 		Vector3 pos = this.transform.position;
 		pos.z = -1;
 		smoke.transform.position = pos;
 
-		this.GetComponent<SpriteRenderer> ().color = destroyedColor;
-		this.gun.GetComponent<SpriteRenderer> ().color = destroyedColor;
+		baseRenderer.color = destroyedColor;
+		gunRenderer.color = destroyedColor;
 
 		this.destroyed = true;
 	}
@@ -213,19 +233,9 @@ public class Turret : Positional {
 		return StartLazerAt (pos, facing, 1);
 	}
 
-	private GameObject AddLazerImpact(Lazer parent, Lazer.State state){
-		var lazerImpact = Instantiate (lazerImpactPrefab);
-		lazerImpact.transform.parent = parent.transform;
-		lazerImpact.transform.localPosition = Vector2.zero;
-
-		SetImpactLayerOrder (lazerImpact, parent.facing, state);
-
-		return lazerImpact;
-	}
-	
 	private Lazer StartLazerAt(Coordinate pos, Direction facing, float maxLength){
 		GameObject lazer;
-		//lazer = Instantiate (lazerPrefab);
+
 		if (lazerPool.Count <= 0)
 			lazer = Instantiate (lazerPrefab);
 		else {
@@ -241,6 +251,8 @@ public class Turret : Positional {
 		lazerScript.SetLength (0);
 		lazerScript.maxLength = maxLength;
 		lazerScript.position = pos;
+		lazerScript.layerOrderMultiplier = this.playerNumber;
+		lazerScript.SendToBack ();
 		
 		this.lazerPath.Add (lazerScript);
 		
@@ -250,9 +262,12 @@ public class Turret : Positional {
 	void SetImpactLayerOrder (GameObject lazerImpact, Coordinate facing, Lazer.State state)
 	{
 		// Lazer is INCOMING here
-		var renderer = lazerImpact.GetComponent<SpriteRenderer> ();
+		var circleRenderer = lazerImpact.GetComponent<SpriteRenderer> ();
+		var hilightRenderer = lazerImpact.transform.FindChild("hilight").GetComponent<SpriteRenderer> ();
+
 		var front = Lazer.IsFront (facing, state, true);
-		renderer.sortingOrder = front ? 2 : -1;
+		circleRenderer.sortingOrder = front ? 3 : -2;
+		hilightRenderer.sortingOrder = front ? 4 : -1;
 	}
 	 
 	public void Reroute (Coordinate change, bool flipped)
@@ -291,7 +306,7 @@ public class Turret : Positional {
 			lazerState = flipped ? Lazer.State.FlippedTurn : Lazer.State.Turn;
 
 			currentLazerSection.SetLayerOrder (lazerState, true);
-			currentLazerSection.ClearChildren();
+			currentLazerSection.DisableImpact();
 
 			currentRange = 0;
 			firing = true;
@@ -303,8 +318,12 @@ public class Turret : Positional {
 	private void MoveToPool(Lazer lazer){
 		lazer.transform.localRotation = Quaternion.identity;
 		lazer.transform.localPosition = Vector2.zero;
-		lazer.ResetSpritePosition ();
-		lazer.ClearChildren ();
+
+		lazer.ResetLayer ();
+
+		lazer.DisableOffset ();
+		lazer.DisableImpact ();
+
 		lazer.gameObject.SetActive (false);
 
 		lazerPool.Add (lazer.gameObject);

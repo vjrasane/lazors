@@ -21,7 +21,6 @@ public class CameraController : MonoBehaviour {
 	}
 	
 	void FixedUpdate () {
-		HandleZoom ();
 		HandleMove ();
 	}
 
@@ -30,9 +29,10 @@ public class CameraController : MonoBehaviour {
 			Shake ();
 		}
 		HandleShake ();
+		HandleZoom ();
 	}
 
-		void HandleZoom ()
+	void HandleZoom ()
 	{
 		if (Input.GetAxis ("Mouse ScrollWheel") < 0)// back
 		{
@@ -43,11 +43,11 @@ public class CameraController : MonoBehaviour {
 			currentZoomSpeed = -zoomSpeed;
 		}
 		if (currentZoomSpeed < 0) {
-			Camera.main.orthographicSize = Mathf.Max (Camera.main.orthographicSize + currentZoomSpeed, Constants.CAMERA_MIN_ZOOM);
-			currentZoomSpeed = Mathf.Min (currentZoomSpeed + zoomDrag, 0);
+			Camera.main.orthographicSize = Mathf.Max (Camera.main.orthographicSize + currentZoomSpeed * Time.deltaTime, Constants.CAMERA_MIN_ZOOM);
+			currentZoomSpeed = Mathf.Min (currentZoomSpeed + zoomDrag * Time.deltaTime, 0);
 		} else if (currentZoomSpeed > 0) {
-				Camera.main.orthographicSize = Mathf.Min (Camera.main.orthographicSize + currentZoomSpeed, Constants.CAMERA_MAX_ZOOM);
-				currentZoomSpeed = Mathf.Max (currentZoomSpeed - zoomDrag, 0);
+			Camera.main.orthographicSize = Mathf.Min (Camera.main.orthographicSize + currentZoomSpeed * Time.deltaTime, Constants.CAMERA_MAX_ZOOM);
+			currentZoomSpeed = Mathf.Max (currentZoomSpeed - zoomDrag * Time.deltaTime, 0);
 		}
 	}
 

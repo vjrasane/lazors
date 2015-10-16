@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine.UI;
 
 public class Grid : MonoBehaviour {
 
@@ -10,6 +11,8 @@ public class Grid : MonoBehaviour {
 	public GameObject safeZonePrefab;
 	public GameObject turretPrefab;
 	public GameObject mirrorPrefab;
+
+	public Text playerName;
 
 	private int maxX = 0;
 	private int minX = 0;
@@ -40,11 +43,6 @@ public class Grid : MonoBehaviour {
 		CreateScenario ();
 
 		DrawSquares ();
-	}
-
-	// Update is called once per frame
-	void Update () {
-		
 	}
 
 	void DrawSquares(){
@@ -158,6 +156,9 @@ public class Grid : MonoBehaviour {
 			} else if(piece.GetType() == typeof(Scenario.Turret)){
 				var facing = ((Scenario.Turret)piece).facing;
 				var turret = InstantiateAt(target, turretPrefab, true);
+
+				UIController.AddPlayerLabel("Player " + playerCounter, turret.transform.position);
+
 				var turretScript = turret.GetComponent<Turret>();
 				turretScript.playerNumber = playerCounter++;
 				turretScript.RotateGun(facing);

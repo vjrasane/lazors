@@ -8,8 +8,8 @@ public class Constants {
 	public static float CAMERA_MIN_ZOOM = 2f;
 	public static float CAMERA_MAX_ZOOM = 13f;
 
-	public static float CAMERA_ZOOM_SPEED = 0.5f;
-	public static float CAMERA_ZOOM_DRAG = 0.03f;
+	public static float CAMERA_ZOOM_SPEED = 7f;
+	public static float CAMERA_ZOOM_DRAG = 15f;
 
 	public static float CAMERA_MOVE_SPEED = 0.25f;
 	public static float CAMERA_MOVE_DRAG = 10f;
@@ -26,6 +26,8 @@ public class Constants {
 	public static float EXPLOSION_CHARGEUP_DURATION = 0.5f;
 
 	public static Color COLOR_TRANSPARENT = Color.white;
+
+	public static float PLAYER_LABEL_OFFSET = 15f;
 
 	static Constants(){
 		COLOR_TRANSPARENT.a = 0;

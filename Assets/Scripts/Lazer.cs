@@ -31,11 +31,16 @@ public class Lazer : Positional {
 		this.beamRenderer = sprite.GetComponent<SpriteRenderer> ();
 		this.hilightRenderer = sprite.transform.FindChild("hilight").GetComponent<SpriteRenderer> ();
 
-		this.hilightRenderer.color = lazerColor;
+		SetColor(lazerColor);
 
 		if (length == 0.0f) {
 			length = this.beamRenderer.bounds.size.x;
 		}
+	}
+
+	public void SetColor(Color color){
+		this.lazerColor = color;
+		this.hilightRenderer.color = color;
 	}
 
 	public void DisableImpact(){
@@ -47,9 +52,9 @@ public class Lazer : Positional {
 		if (this.impact == null) {
 			impact = Instantiate(lazerImpactPrefab);
 			impact.transform.parent = this.transform;
-			this.impact.transform.FindChild("hilight").GetComponent<SpriteRenderer>().color = lazerColor;
 		}
 
+		this.impact.transform.FindChild("hilight").GetComponent<SpriteRenderer>().color = lazerColor;
 		this.impact.transform.position = position;
 
 		this.impact.SetActive (true);

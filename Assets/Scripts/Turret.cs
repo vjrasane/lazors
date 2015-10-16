@@ -10,6 +10,7 @@ public class Turret : Positional {
 	public GameObject explosionPrefab;
 	public GameObject smokePrefab;
 
+	public Color lazerColor;
 	public Color playerColor;
 	public Color destroyedColor;
 
@@ -27,9 +28,9 @@ public class Turret : Positional {
 	private int currentRange = 0;
 
 	private List<Lazer> lazerPath = new List<Lazer>();
-	private List<GameObject> lazerPool = new List<GameObject> ();
+	private static List<GameObject> LAZER_POOL = new List<GameObject> ();
 
-	private float impactLazerLength;
+	private float impactLazerLength = 0.5f;
 
 	public int playerNumber = 0;
 
@@ -51,8 +52,6 @@ public class Turret : Positional {
 
 		Lazer.length = lazerSprite.GetComponent<SpriteRenderer>().bounds.size.x;
 		lazerSprite.transform.Translate (new Vector3 (Lazer.length / 2,0,0));
-
-		impactLazerLength = 0.5f;
 	}
 
 	void Start(){
@@ -85,6 +84,7 @@ public class Turret : Positional {
 	void Update(){
 		if (Input.GetKeyDown (KeyCode.Space)) {
 			active = !active && !destroyed;
+			Debug.Log (LAZER_POOL.Count);
 			Fire ();
 		}
 
@@ -184,8 +184,6 @@ public class Turret : Positional {
 					} else if (exists || currentRange < Grid.LAZER_MAX_RANGE) {
 						GameObject obj;
 						grid.objects.TryGetValue (TranslateCoordinate (lazerPosition), out obj);
-						if(obj != null)
-							Debug.Log (obj.tag);
 
 						if (obj != null && !obj.tag.Equals("SafeZone")) {
 							lazerHit = obj;
@@ -277,7 +275,7 @@ public class Turret : Positional {
 	private Lazer StartLazerAt(Coordinate pos, Direction facing, float maxLength){
 		GameObject lazer;
 
-		if (lazerPool.Count <= 0)
+		if (LAZER_POOL.Count <= 0)
 			lazer = Instantiate (lazerPrefab);
 		else {
 			lazer = GetFromPool();
@@ -288,6 +286,7 @@ public class Turret : Positional {
 		lazer.transform.Translate(pos.asVec3() * Lazer.length);
 		
 		var lazerScript = lazer.GetComponent<Lazer> ();
+		lazerScript.SetColor (lazerColor);
 		lazerScript.Rotate (facing);
 		lazerScript.SetLength (0);
 		lazerScript.maxLength = maxLength;
@@ -318,7 +317,6 @@ public class Turret : Positional {
 			}
 			return;
 		}
-			
 
 		index++;
 		List<Lazer> destroy = lazerPath.GetRange(index, lazerPath.Count - index);
@@ -356,13 +354,13 @@ public class Turret : Positional {
 
 		lazer.gameObject.SetActive (false);
 
-		lazerPool.Add (lazer.gameObject);
+		LAZER_POOL.Add (lazer.gameObject);
 	}
 
 	private GameObject GetFromPool(){
-		var lazer = lazerPool[0].gameObject;
+		var lazer = LAZER_POOL[0].gameObject;
 		lazer.SetActive(true);
-		lazerPool.RemoveAt (0);
+		LAZER_POOL.RemoveAt (0);
 
 		return lazer;
 	}

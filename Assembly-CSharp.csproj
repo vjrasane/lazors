@@ -57,6 +57,7 @@
      <Compile Include="Assets\Scripts\SafeZone.cs" />
      <Compile Include="Assets\Scripts\Scenario.cs" />
      <Compile Include="Assets\Scripts\Turret.cs" />
+     <Compile Include="Assets\Scripts\UIController.cs" />
  <Reference Include="UnityEngine.UI">
  <HintPath>D:/Programs/Unity/Editor/Data/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
  </Reference>

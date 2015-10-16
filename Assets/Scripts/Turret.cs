@@ -66,7 +66,7 @@ public class Turret : Positional {
 	private void ClearLazer(){
 		lazerPath.ForEach (l => MoveToPool(l));
 		lazerPath.Clear ();
-		lazerState = Lazer.State.Straight;
+		lazerHit = null;
 		currentLazerSection = null;
 		currentRange = 0;
 	}
@@ -86,9 +86,9 @@ public class Turret : Positional {
 	private Direction lazerDirection;
 	private Coordinate lazerPosition;
 
-	private Lazer.State lazerState = Lazer.State.Straight;
-
 	private float excess = 0f;
+
+	private GameObject lazerHit = null;
 
 	/*
 	 * THE CHURCH OF THE FLYING SPAGHETTI MONSTER
@@ -121,9 +121,9 @@ public class Turret : Positional {
 				excess = currentLength + Constants.LAZER_SPEED - maxLength;
 			} else {
 				do {
-					if (lazerState != Lazer.State.Straight) {
-						currentLazerSection.AddImpact(lazerState);
-						if(lazerState == Lazer.State.Impact){
+					if (lazerHit != null) {
+						currentLazerSection.AddImpact(lazerHit);
+						if(lazerHit.tag.Equals("Turret")){
 							firing = false;
 							EndGame();
 							break;
@@ -132,30 +132,26 @@ public class Turret : Positional {
 							currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, impactLazerLength);
 
 							currentLazerSection.EnableOffset();
-							currentLazerSection.SetLayerOrder (lazerState, false);
+							currentLazerSection.SetLayerOrder (lazerHit, false);
 							
 							lazerPosition = GetNextLazerPosition (currentLazerSection.facing);
-							lazerState = Lazer.State.Straight;
+							lazerHit = null;
 						}
 					} else if (exists || currentRange < Grid.LAZER_MAX_RANGE) {
 						GameObject obj;
 						grid.objects.TryGetValue (TranslateCoordinate (lazerPosition), out obj);
 						if (obj != null && !obj.tag.Equals("SafeZone")) {
-
+							lazerHit = obj;
 							currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, impactLazerLength);
 
-							if(obj.tag.Equals ("Mirror")){
+							if(obj.tag.Equals (Constants.MIRROR_TAG)){
 								bool flipped = obj.GetComponent<Mirror> ().IsFlipped ();
 								lazerDirection = lazerDirection.mirror (flipped);
-								lazerState = flipped ? Lazer.State.FlippedTurn : Lazer.State.Turn;
 
 								exists = ObjectExists(TranslateCoordinate(lazerPosition), lazerDirection);
 
-							} else if(obj.tag.Equals ("Turret")) {
-								lazerState = Lazer.State.Impact;
 							}
-
-							currentLazerSection.SetLayerOrder (lazerState, true);
+							currentLazerSection.SetLayerOrder (lazerHit, true);
 							
 							currentRange = 0;
 						} else {
@@ -258,17 +254,6 @@ public class Turret : Positional {
 		
 		return lazerScript;
 	}
-
-	void SetImpactLayerOrder (GameObject lazerImpact, Coordinate facing, Lazer.State state)
-	{
-		// Lazer is INCOMING here
-		var circleRenderer = lazerImpact.GetComponent<SpriteRenderer> ();
-		var hilightRenderer = lazerImpact.transform.FindChild("hilight").GetComponent<SpriteRenderer> ();
-
-		var front = Lazer.IsFront (facing, state, true);
-		circleRenderer.sortingOrder = front ? 3 : -2;
-		hilightRenderer.sortingOrder = front ? 4 : -1;
-	}
 	 
 	public void Reroute (Coordinate change, bool flipped)
 	{
@@ -279,7 +264,7 @@ public class Turret : Positional {
 		int index = lazerPath.FindIndex(s => s.position.Equals(translated));
 		if (index < 0) {
 			var lastLazer = lazerPath[lazerPath.Count - 1];
-			if(lazerState != Lazer.State.Impact && ObjectExists(TranslateCoordinate(lastLazer.position), lastLazer.facing)){
+			if(lazerHit == null && ObjectExists(TranslateCoordinate(lastLazer.position), lastLazer.facing)){
 				currentLazerSection = lastLazer;
 				lazerPosition = GetNextLazerPosition(currentLazerSection.facing);
 				lazerDirection = currentLazerSection.facing;
@@ -303,9 +288,9 @@ public class Turret : Positional {
 			lazerPosition = currentLazerSection.position;
 	
 			lazerDirection = currentLazerSection.facing.mirror (flipped);
-			lazerState = flipped ? Lazer.State.FlippedTurn : Lazer.State.Turn;
+			lazerHit = grid.objects[change];
 
-			currentLazerSection.SetLayerOrder (lazerState, true);
+			currentLazerSection.SetLayerOrder (lazerHit, true);
 			currentLazerSection.DisableImpact();
 
 			currentRange = 0;

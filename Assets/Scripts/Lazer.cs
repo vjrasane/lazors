@@ -3,8 +3,6 @@ using System.Collections;
 
 public class Lazer : Positional {
 
-	public enum State { Straight, Turn, FlippedTurn, Impact }
-
 	private GameObject impact;
 	public GameObject lazerImpactPrefab;
 
@@ -43,7 +41,7 @@ public class Lazer : Positional {
 			this.impact.SetActive (false);
 	}
 
-	public void AddImpact(State state){
+	public void AddImpact(GameObject hit){
 		if (this.impact == null) {
 			impact = Instantiate(lazerImpactPrefab);
 			impact.transform.parent = this.transform;
@@ -52,7 +50,7 @@ public class Lazer : Positional {
 		}
 		this.impact.SetActive (true);
 
-		SetImpactLayerOrder (state);
+		SetImpactLayerOrder (hit);
 	}
 
 	public void DisableOffset(){
@@ -83,36 +81,38 @@ public class Lazer : Positional {
 	
 	}
 
-	public void SetLayerOrder (State lazerState, bool incoming)
+	public void SetLayerOrder (GameObject hit, bool incoming)
 	{
-		SendTo (IsFront(this.facing, lazerState, incoming));
+		SendTo (IsFront(this.facing, hit, incoming));
 	}
 
-	public static bool IsFront (Coordinate direction, State lazerState, bool incoming)
+	public static bool IsFront (Coordinate direction, GameObject hit, bool incoming)
 	{
-		if (lazerState == State.Impact)
+		if (!hit.tag.Equals(Constants.MIRROR_TAG) )
 			return true;
 		else {
-			bool front = false;
+			var flipped = hit.GetComponent<Mirror>().IsFlipped();
+
+			var front = false;
 			
 			if(direction.y != 0){
 				front = direction.y > 0;
 			} else {
 				front = direction.x > 0;
-				front = lazerState.Equals(State.FlippedTurn) ? !front : front;
+				front = flipped ? !front : front;
 			}
 			front = incoming ? front : !front;
 			return front;
 		}
 	}
 
-	void SetImpactLayerOrder (Lazer.State state)
+	void SetImpactLayerOrder (GameObject hit)
 	{
 		// Lazer is INCOMING here
 		var circleRenderer = this.impact.GetComponent<SpriteRenderer> ();
 		var hilightRenderer = this.impact.transform.FindChild("hilight").GetComponent<SpriteRenderer> ();
 		
-		var front = IsFront (facing, state, true);
+		var front = IsFront (facing, hit, true);
 		circleRenderer.sortingOrder = front ? layerOrderMultiplier * 4 - 1 : 2 - layerOrderMultiplier * 4;
 		hilightRenderer.sortingOrder = front ? layerOrderMultiplier * 4 : 3 - layerOrderMultiplier * 4;
 	}

@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class Constants {
@@ -23,4 +23,10 @@ public class Constants {
 
 	public static float EXPLOSION_SHAKE_DURATION = 0.3f;
 	public static float EXPLOSION_SHAKE_MAGNITUDE = 0.1f;
+
+	/*
+	 * TAGS
+	 */
+
+	public static string MIRROR_TAG = "Mirror";
 }

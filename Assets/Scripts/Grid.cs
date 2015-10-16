@@ -12,7 +12,7 @@ public class Grid : MonoBehaviour {
 	public GameObject turretPrefab;
 	public GameObject mirrorPrefab;
 
-	public Text playerName;
+	public Color previewColor;
 
 	private int maxX = 0;
 	private int minX = 0;
@@ -29,9 +29,16 @@ public class Grid : MonoBehaviour {
 	public static float SQUARE_SIZE = 0.0f;
 	private Coordinate center;
 
+	public Mirror selectedPiece;
+
 	void Awake(){
 		center = new Coordinate((int)(Constants.GRID_MAX_SIZE / 2), (int)(Constants.GRID_MAX_SIZE / 2));
 		var squareBlock = InstantiateAt(TranslateCoordinate(center), safeZonePrefab);
+
+		selectedPiece = Instantiate (mirrorPrefab).GetComponent<Mirror>();
+		selectedPiece.GetComponent<SpriteRenderer> ().color = previewColor;
+		selectedPiece.GetComponent<BoxCollider2D> ().enabled = false;
+		selectedPiece.gameObject.SetActive (false);
 
 		SQUARE_SIZE = squareBlock.GetComponent<BoxCollider2D> ().bounds.size.x;
 
@@ -43,6 +50,13 @@ public class Grid : MonoBehaviour {
 		CreateScenario ();
 
 		DrawSquares ();
+	}
+
+
+	void Update(){
+		if (Input.GetKeyDown (KeyCode.Tab)) {
+			selectedPiece.Flip();
+		}
 	}
 
 	void DrawSquares(){
@@ -146,16 +160,15 @@ public class Grid : MonoBehaviour {
 		}
 
 		int playerCounter = 1;
-		foreach (KeyValuePair<Coordinate, Scenario.GamePiece> pair in scenario.pieces) {
-			var piece = pair.Value;
-			var target = pair.Key;
+		foreach (Coordinate coord in scenario.pieces.Keys) {
+			var piece = scenario.pieces[coord];
 
 			if(piece.GetType() == typeof(Scenario.SafeZone)){
 				// No need to translate here
-				objects.Add (target, InstantiateAt(target, safeZonePrefab, true));
+				objects.Add (coord, InstantiateAt(coord, safeZonePrefab, true));
 			} else if(piece.GetType() == typeof(Scenario.Turret)){
 				var facing = ((Scenario.Turret)piece).facing;
-				var turret = InstantiateAt(target, turretPrefab, true);
+				var turret = InstantiateAt(coord, turretPrefab, true);
 
 				UIController.AddPlayerLabel("Player " + playerCounter, turret.transform.position);
 
@@ -164,7 +177,7 @@ public class Grid : MonoBehaviour {
 				turretScript.RotateGun(facing);
 
 				turrets.Add(turretScript);
-				objects.Add (target, turret);
+				objects.Add (coord, turret);
 			}
 		}
 	}

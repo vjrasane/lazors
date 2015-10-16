@@ -30,22 +30,35 @@ public class GridSquare : Positional {
 
 	void OnMouseOver(){
 		this.renderer.color = activeColor;
+		ShowPreview ();
 		HandleClick ();
 	}
 
 	void OnMouseExit(){
 		this.renderer.color = inactiveColor;
+		HidePreview ();
 	}
 
 	void Update () {
 	
 	}
 
+	void ShowPreview ()
+	{
+		grid.selectedPiece.gameObject.SetActive (true);
+		grid.selectedPiece.transform.position = this.transform.position;
+	}
+
+	void HidePreview ()
+	{
+		grid.selectedPiece.gameObject.SetActive (false);
+	}
+
 	void HandleClick ()
 	{
 		if (Input.GetMouseButtonDown (0)) {
 			SetDisabled(true);
-			grid.PutMirror (position, false);
+			grid.PutMirror (position, grid.selectedPiece.IsFlipped());
 
 		} else if (Input.GetMouseButtonDown (1)) {
 			SetDisabled(true);

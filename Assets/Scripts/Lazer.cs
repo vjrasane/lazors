@@ -7,6 +7,7 @@ public class Lazer : Positional {
 	public GameObject lazerImpactPrefab;
 
 	private GameObject sprite;
+	public GameObject front;
 
 	public Color lazerColor;
 
@@ -25,6 +26,7 @@ public class Lazer : Positional {
 
 	// Use this for initialization
 	void Awake () {
+		this.front = this.transform.FindChild ("front").gameObject;
 		this.sprite = this.transform.FindChild("sprite").gameObject;
 		this.beamRenderer = sprite.GetComponent<SpriteRenderer> ();
 		this.hilightRenderer = sprite.transform.FindChild("hilight").GetComponent<SpriteRenderer> ();
@@ -41,16 +43,22 @@ public class Lazer : Positional {
 			this.impact.SetActive (false);
 	}
 
-	public void AddImpact(GameObject hit){
+	public void AddImpact(GameObject hit, Vector2 position){
 		if (this.impact == null) {
 			impact = Instantiate(lazerImpactPrefab);
 			impact.transform.parent = this.transform;
-			impact.transform.localPosition = Vector2.zero;
 			this.impact.transform.FindChild("hilight").GetComponent<SpriteRenderer>().color = lazerColor;
 		}
-		this.impact.SetActive (true);
 
+		this.impact.transform.position = position;
+
+		this.impact.SetActive (true);
+		
 		SetImpactLayerOrder (hit);
+	}
+
+	public void AddImpact(GameObject hit){
+		AddImpact (hit, this.transform.position);
 	}
 
 	public void DisableOffset(){

@@ -23,6 +23,19 @@ public class Constants {
 
 	public static float EXPLOSION_SHAKE_DURATION = 0.3f;
 	public static float EXPLOSION_SHAKE_MAGNITUDE = 0.1f;
+	public static float EXPLOSION_CHARGEUP_DURATION = 0.5f;
+
+	public static Color COLOR_TRANSPARENT = Color.white;
+
+	static Constants(){
+		COLOR_TRANSPARENT.a = 0;
+	}
+
+	/*
+	 * LAYERS
+	 */
+
+	public static string OBSTACLE_LAYER = "Obstacle";
 
 	/*
 	 * TAGS

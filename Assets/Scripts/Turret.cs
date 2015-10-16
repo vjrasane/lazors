@@ -16,6 +16,9 @@ public class Turret : Positional {
 	private SpriteRenderer baseRenderer;
 	private SpriteRenderer gunRenderer;
 
+	private SpriteRenderer baseShadowRenderer;
+	private SpriteRenderer gunShadowRenderer;
+
 	private bool destroyed = false;
 	private bool firing = false;
 	private bool active = true;
@@ -36,6 +39,9 @@ public class Turret : Positional {
 
 		this.baseRenderer = this.GetComponent<SpriteRenderer> ();
 		this.gunRenderer = this.gun.GetComponent<SpriteRenderer> ();
+
+		this.baseShadowRenderer = this.transform.FindChild("base_shadow").GetComponent<SpriteRenderer> ();
+		this.gunShadowRenderer = this.gun.transform.FindChild("gun_shadow").GetComponent<SpriteRenderer> ();
 
 		baseRenderer.color = playerColor;
 		gunRenderer.color = playerColor;
@@ -58,6 +64,11 @@ public class Turret : Positional {
 		firing = active;
 	}
 
+	void CeaseFire(){
+		ClearLazer ();
+		firing = false;
+	}
+
 	public void RotateGun(Direction facing){
 		gun.Rotate (new Vector3(0,0,facing.angle));
 		this.facing = facing;
@@ -70,11 +81,44 @@ public class Turret : Positional {
 		currentLazerSection = null;
 		currentRange = 0;
 	}
-
+	
 	void Update(){
 		if (Input.GetKeyDown (KeyCode.Space)) {
-			active = !active;
+			active = !active && !destroyed;
 			Fire ();
+		}
+
+		HandleExplode ();
+	}
+
+	void HandleExplode ()
+	{
+		if (exploding) {
+			if (explodeTime < Constants.EXPLOSION_CHARGEUP_DURATION) {
+				var color = Color.Lerp (playerColor, Color.white, explodeTime / Constants.EXPLOSION_CHARGEUP_DURATION);
+				this.baseRenderer.color = color;
+				this.gunRenderer.color = color;
+				var c = Color.Lerp (Color.white, Constants.COLOR_TRANSPARENT, explodeTime / Constants.EXPLOSION_CHARGEUP_DURATION);
+				this.baseShadowRenderer.color = c;
+				this.gunShadowRenderer.color = c;
+				explodeTime += Time.deltaTime;
+			}
+			else {
+				var explosion = Instantiate (explosionPrefab);
+				explosion.transform.position = this.transform.position;
+				Camera.main.GetComponent<CameraController> ().Shake ();
+				var smoke = Instantiate (smokePrefab);
+				Vector3 pos = this.transform.position;
+				pos.z = -1;
+				smoke.transform.position = pos;
+				baseRenderer.color = destroyedColor;
+				gunRenderer.color = destroyedColor;
+
+				CeaseFire();
+
+				exploding = false;
+				destroyed = true;
+			}
 		}
 	}
 	
@@ -122,7 +166,7 @@ public class Turret : Positional {
 			} else {
 				do {
 					if (lazerHit != null) {
-						currentLazerSection.AddImpact(lazerHit);
+
 						if(lazerHit.tag.Equals("Turret")){
 							firing = false;
 							EndGame();
@@ -140,17 +184,28 @@ public class Turret : Positional {
 					} else if (exists || currentRange < Grid.LAZER_MAX_RANGE) {
 						GameObject obj;
 						grid.objects.TryGetValue (TranslateCoordinate (lazerPosition), out obj);
+						if(obj != null)
+							Debug.Log (obj.tag);
+
 						if (obj != null && !obj.tag.Equals("SafeZone")) {
 							lazerHit = obj;
-							currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, impactLazerLength);
 
 							if(obj.tag.Equals (Constants.MIRROR_TAG)){
+								currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, impactLazerLength);
+								currentLazerSection.AddImpact(lazerHit);
+
 								bool flipped = obj.GetComponent<Mirror> ().IsFlipped ();
 								lazerDirection = lazerDirection.mirror (flipped);
 
 								exists = ObjectExists(TranslateCoordinate(lazerPosition), lazerDirection);
 
+							} else {
+								var raycast = Physics2D.Raycast(currentLazerSection.transform.position, lazerDirection.asVec2(), Mathf.Infinity, 1 << LayerMask.NameToLayer(Constants.OBSTACLE_LAYER));
+								var distance = (raycast.distance - Lazer.length / 2) / Lazer.length;
+								currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, distance);
+								currentLazerSection.AddImpact(lazerHit, raycast.point);
 							}
+
 							currentLazerSection.SetLayerOrder (lazerHit, true);
 							
 							currentRange = 0;
@@ -178,24 +233,14 @@ public class Turret : Positional {
 
 	}
 
+	private float explodeTime = 0.0f;
+	private bool exploding = false;
+
 	public void Explode(){
-		if (this.destroyed)
+		if (this.destroyed || this.exploding)
 			return;
 
-		var explosion = Instantiate (explosionPrefab);
-		explosion.transform.position = this.transform.position;
-
-		Camera.main.GetComponent<CameraController> ().Shake ();
-
-		var smoke = Instantiate (smokePrefab);
-		Vector3 pos = this.transform.position;
-		pos.z = -1;
-		smoke.transform.position = pos;
-
-		baseRenderer.color = destroyedColor;
-		gunRenderer.color = destroyedColor;
-
-		this.destroyed = true;
+		this.exploding = true;
 	}
 
 	bool ObjectExists(Lazer lazer){
@@ -291,7 +336,7 @@ public class Turret : Positional {
 			lazerHit = grid.objects[change];
 
 			currentLazerSection.SetLayerOrder (lazerHit, true);
-			currentLazerSection.DisableImpact();
+			currentLazerSection.AddImpact(lazerHit);
 
 			currentRange = 0;
 			firing = true;

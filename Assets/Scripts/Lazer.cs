@@ -58,7 +58,27 @@ public class Lazer : Positional {
 			this.impact.SetActive (false);
 	}
 
-	public void AddImpact(GameObject hit, Vector2 position, float alpha){
+	public void AddImpact(GameObject hit, Vector2 position, bool preview){
+		AddImpact (hit, position);
+
+		var hilightRenderer = this.impact.transform.FindChild ("hilight").GetComponent<SpriteRenderer> ();
+		var hilight = hilightRenderer.color;
+		var circleRenderer = this.impact.GetComponent<SpriteRenderer> ();
+		var circle = circleRenderer.color;
+
+		if (preview) {
+			hilight.a = Constants.LAZER_PREVIEW_ALPHA;
+			circle.a = Constants.LAZER_PREVIEW_ALPHA;
+		} else {
+			hilight.a = 1;
+			circle.a = 1;
+		}
+
+		hilightRenderer.color = hilight;
+		circleRenderer.color = circle;
+	}
+
+	private GameObject AddImpact(GameObject hit, Vector2 position){
 		if (this.impact == null) {
 			impact = Instantiate(lazerImpactPrefab);
 			impact.transform.parent = this.transform;
@@ -67,24 +87,17 @@ public class Lazer : Positional {
 		var hilightRenderer = this.impact.transform.FindChild ("hilight").GetComponent<SpriteRenderer>();
 		hilightRenderer.color = lazerColor;
 
-		var hilight = hilightRenderer.color;
-		hilight.a = alpha;
-		hilightRenderer.color = hilight;
-
-		var circleRenderer = this.impact.GetComponent<SpriteRenderer> ();
-		var circle = circleRenderer.color;
-		circle.a = alpha;
-		circleRenderer.color = circle;
-
 		this.impact.transform.position = position;
 
 		this.impact.SetActive (true);
 		
 		SetImpactLayerOrder (hit);
+
+		return this.impact;
 	}
 
-	public void AddImpact(GameObject hit, float alpha){
-		AddImpact (hit, this.transform.position, alpha);
+	public void AddImpact(GameObject hit, bool preview){
+		AddImpact (hit, this.transform.position, preview);
 	}
 
 	public void DisableOffset(){

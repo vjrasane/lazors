@@ -70,6 +70,16 @@ public class Turret : Positional {
 		this.lazer.Reroute (change, flipped);
 	}
 
+	public void Preview (Coordinate change, GameObject obj)
+	{
+		this.lazer.Preview (change, obj);
+	}
+
+	public void ClearPreview ()
+	{
+		this.lazer.ClearPreview ();
+	}
+
 	void HandleExplode ()
 	{
 		if (exploding) {

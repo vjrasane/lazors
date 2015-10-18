@@ -59,6 +59,11 @@ public class Coordinate : object {
 		return x ^ y;
 	}
 
+	public override string ToString() 
+	{
+		return "{" + x + "," + y + "}";
+	}
+
 	public int NonZero(){
 		if (x != 0)
 			return x;

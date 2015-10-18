@@ -8,6 +8,7 @@ public class LazerController : MonoBehaviour {
 
 	public GameObject lazerPrefab;
 	private List<Lazer> lazerPath = new List<Lazer>();
+	private List<Lazer> previewPath = new List<Lazer>();
 	private static List<GameObject> LAZER_POOL = new List<GameObject> ();
 
 	public Color lazerColor;
@@ -56,7 +57,6 @@ public class LazerController : MonoBehaviour {
 
 	void EndGame ()
 	{
-		firing = false;
 		lazerHit.GetComponent<Turret> ().Explode();
 	}
 
@@ -117,7 +117,7 @@ public class LazerController : MonoBehaviour {
 			lazerHit = this.turret.grid.objects[change];
 			
 			currentLazerSection.SetLayerOrder (lazerHit, true);
-			currentLazerSection.AddImpact(lazerHit, 1);
+			currentLazerSection.AddImpact(lazerHit, false);
 			
 			currentRange = 0;
 			firing = true;
@@ -126,24 +126,35 @@ public class LazerController : MonoBehaviour {
 		}
 	}
 
-	private Lazer StartLazerAt(Coordinate pos, Direction facing){
-		return StartLazerAt (pos, facing, 1);
+	private Lazer StartLazerAt(Coordinate pos, Direction facing, bool preview){
+		return StartLazerAt (pos, facing, 1, preview);
 	}
 
-	private Lazer StartLazerAt(Coordinate pos, Direction facing, float maxLength, float alpha){
-		var lazer = StartLazerAt (pos, facing, maxLength);
-		lazer.SetVisibility (alpha);
+	private Lazer StartLazerAt(Coordinate pos, Direction facing, float maxLength, bool preview){
+		Lazer lazer;
+		if (preview) {
+			lazer = StartLazerAt (pos, facing, maxLength, previewPath);
+			lazer.SetVisibility (Constants.LAZER_PREVIEW_ALPHA);
+			lazer.SetLength (maxLength);
+		} else {
+			lazer = StartLazerAt (pos, facing, maxLength, this.lazerPath);
+			lazer.SetVisibility(1);
+		}
+
 		return lazer;
 	}
 
-	private Lazer StartLazerAt(Coordinate pos, Direction facing, float maxLength){
-		GameObject lazer;
-		
+	GameObject GetLazerInstance ()
+	{
 		if (LAZER_POOL.Count <= 0)
-			lazer = Instantiate (lazerPrefab);
+			return Instantiate (lazerPrefab);
 		else {
-			lazer = GetFromPool();
+			return GetFromPool ();
 		}
+	}
+
+	private Lazer StartLazerAt(Coordinate pos, Direction facing, float maxLength, List<Lazer> path){
+		GameObject lazer = GetLazerInstance ();
 		
 		lazer.transform.parent = this.transform;
 		lazer.transform.localPosition = Vector2.zero;
@@ -158,7 +169,7 @@ public class LazerController : MonoBehaviour {
 		lazerScript.layerOrderMultiplier = turret.playerNumber;
 		lazerScript.SendToBack ();
 		
-		this.lazerPath.Add (lazerScript);
+		path.Add (lazerScript);
 		
 		return lazerScript;
 	}
@@ -179,7 +190,7 @@ public class LazerController : MonoBehaviour {
 	}
 	
 	private Coordinate GetNextLazerPosition(Coordinate dir){
-		return lazerPath[lazerPath.Count - 1].position + dir;
+		return currentLazerSection.position + dir;
 	}
 
 	private Direction lazerDirection;
@@ -196,13 +207,51 @@ public class LazerController : MonoBehaviour {
 	void HandleFiring ()
 	{
 		if (firing) {	
-			FireLazer (EndGame, Constants.LAZER_PREVIEW_ALPHA);		
+			FireLazer(EndGame, false);		
 		}
 	}
 
-	void FireLazer (Action onImpact, float alpha)
+	public void ClearPreview(){
+		if (previewPath.Count <= 0)
+			return;
+
+		var startPos = previewPath[0].position;
+		lazerPath.Find (l => l.position.Equals(startPos)).DisableImpact();
+
+		currentLazerSection = null;
+		lazerDirection = null;
+		lazerPosition = null;
+		currentRange = 0;
+		lazerHit = null;
+
+		previewPath.ForEach (p => MoveToPool (p));
+		previewPath.Clear ();
+	}
+
+	public void Preview(Coordinate position, GameObject obj){
+		var lazer = lazerPath.Find (l => l.position.Equals(turret.ReverseTranslate(position)));
+		if (lazer != null) {
+			currentLazerSection = lazer;
+			if (obj.tag.Equals (Constants.MIRROR_TAG)) {
+				currentLazerSection.AddImpact (obj, true);
+				bool flipped = obj.GetComponent<Mirror> ().IsFlipped ();
+				lazerDirection = currentLazerSection.facing.mirror (flipped);
+				lazerPosition = currentLazerSection.position;
+
+				currentRange = 0;
+				lazerHit = obj;
+			}
+
+			FireLazer(() => {}, true);
+		}
+	}
+
+	private void FireLazer (Action onImpact, bool preview)
 	{
-		InitLazer (alpha);
+		InitLazer (preview);
+
+		var previewing = preview;
+
 		var currentLength = currentLazerSection.GetCurrentLength ();
 		var maxLength = currentLazerSection.maxLength;
 		bool exists = ObjectExists (turret.TranslateCoordinate (lazerPosition), lazerDirection);
@@ -214,27 +263,28 @@ public class LazerController : MonoBehaviour {
 			do {
 				if (lazerHit != null) {
 					if (lazerHit.tag.Equals ("Turret")) {
+						firing = false;
+						previewing = false;
 						onImpact();
-						break;
+
 						// TODO END GAME HERE;
 					}
 					else {
-						currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, impactLazerLength, alpha);
+						currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, impactLazerLength, preview);
 						currentLazerSection.EnableOffset ();
 						currentLazerSection.SetLayerOrder (lazerHit, false);
 						lazerPosition = GetNextLazerPosition (currentLazerSection.facing);
 						lazerHit = null;
 					}
 				}
-				else
-					if (exists || currentRange < Grid.LAZER_MAX_RANGE) {
+				else if (exists || currentRange < Grid.LAZER_MAX_RANGE) {
 						GameObject obj;
 						turret.grid.objects.TryGetValue (turret.TranslateCoordinate (lazerPosition), out obj);
 						if (obj != null && !obj.tag.Equals ("SafeZone")) {
 							lazerHit = obj;
 							if (obj.tag.Equals (Constants.MIRROR_TAG)) {
-								currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, impactLazerLength, alpha);
-								currentLazerSection.AddImpact (lazerHit, alpha);
+								currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, impactLazerLength, preview);
+								currentLazerSection.AddImpact (lazerHit, preview);
 								bool flipped = obj.GetComponent<Mirror> ().IsFlipped ();
 								lazerDirection = lazerDirection.mirror (flipped);
 								exists = ObjectExists (turret.TranslateCoordinate (lazerPosition), lazerDirection);
@@ -242,39 +292,45 @@ public class LazerController : MonoBehaviour {
 							else {
 								var raycast = Physics2D.Raycast (currentLazerSection.transform.position, lazerDirection.asVec2 (), Mathf.Infinity, 1 << LayerMask.NameToLayer (Constants.OBSTACLE_LAYER));
 								var distance = (raycast.distance - Lazer.length / 2) / Lazer.length;
-								currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, distance, alpha);
-								currentLazerSection.AddImpact (lazerHit, raycast.point, alpha);
+								currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, distance, preview);
+								currentLazerSection.AddImpact (lazerHit, raycast.point, preview);
 							}
 							currentLazerSection.SetLayerOrder (lazerHit, true);
 							currentRange = 0;
 						}
 						else {
-						currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, 1, alpha);
+							currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, 1, preview);
 							lazerPosition = GetNextLazerPosition (currentLazerSection.facing);
 							currentRange++;
 						}
 					}
 					else {
 						firing = false;
+						previewing = false;
 					}
-				currentLazerSection.SetLength (Mathf.Min (currentLazerSection.maxLength, excess));
-				excess -= currentLazerSection.GetCurrentLength ();
+
+				if(!preview) {
+					currentLazerSection.SetLength (Mathf.Min (currentLazerSection.maxLength, excess));
+					excess -= currentLazerSection.GetCurrentLength ();
+
+					excess = Mathf.Max (excess, 0);
+				}
 			}
-			while (excess > 0 && firing);
+			while (previewing || (excess > 0 && firing));
 		}
-		excess = Mathf.Max (excess, 0);
+
 	}
 
-	void InitLazer (float alpha)
+	void InitLazer (bool preview)
 	{
 		if (currentLazerSection == null) {
 			if (lazerPath.Count <= 0) {
-				currentLazerSection = StartLazerAt (Direction.ZERO, turret.GetFacing (), impactLazerLength, alpha);
+				currentLazerSection = StartLazerAt (Direction.ZERO, turret.GetFacing (), impactLazerLength, preview);
 				currentLazerSection.EnableOffset ();
 				currentLazerSection.SetLayer ("AccessoryBelow");
 			}
 			else {
-				currentLazerSection = StartLazerAt (turret.GetFacing (), turret.GetFacing (), 1, alpha);
+				currentLazerSection = StartLazerAt (turret.GetFacing (), turret.GetFacing (), preview);
 			}
 			lazerPosition = GetNextLazerPosition (currentLazerSection.facing);
 			lazerDirection = currentLazerSection.facing;

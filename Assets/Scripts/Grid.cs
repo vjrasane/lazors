@@ -38,6 +38,7 @@ public class Grid : MonoBehaviour {
 		selectedPiece = Instantiate (mirrorPrefab).GetComponent<Mirror>();
 		selectedPiece.GetComponent<SpriteRenderer> ().color = previewColor;
 		selectedPiece.GetComponent<BoxCollider2D> ().enabled = false;
+		selectedPiece.preview = true;
 		selectedPiece.gameObject.SetActive (false);
 
 		SQUARE_SIZE = squareBlock.GetComponent<BoxCollider2D> ().bounds.size.x;
@@ -56,6 +57,8 @@ public class Grid : MonoBehaviour {
 	void Update(){
 		if (Input.GetKeyDown (KeyCode.Tab)) {
 			selectedPiece.Flip();
+			ClearPreviews();
+			PreviewLazers(selectedPiece.position, selectedPiece.gameObject);
 		}
 	}
 
@@ -90,6 +93,7 @@ public class Grid : MonoBehaviour {
 
 	public void PutMirror (Coordinate pos, bool flipped)
 	{
+		ClearPreviews ();
 		var mirror = Put (pos, mirrorPrefab);
 		if (flipped)
 			mirror.GetComponent<Mirror> ().Flip ();
@@ -109,6 +113,14 @@ public class Grid : MonoBehaviour {
 
 	public void RerouteLazers(Coordinate change, bool flipped){
 		turrets.ForEach(t => t.Reroute(change, flipped));
+	}
+
+	public void PreviewLazers(Coordinate change, GameObject obj){
+		turrets.ForEach(t => t.Preview(change, obj));
+	}
+
+	public void ClearPreviews(){
+		turrets.ForEach(t => t.ClearPreview());
 	}
 
 	private GameObject InstantiateAt(Coordinate position, GameObject prefab) {

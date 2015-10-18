@@ -13,6 +13,8 @@ public class GridSquare : Positional {
 	public Color activeColor;
 	public Color inactiveColor;
 
+	private bool preview = false;
+
 	void Awake(){
 		this.renderer = this.GetComponent<SpriteRenderer> ();
 		this.renderer.color = inactiveColor;
@@ -45,13 +47,23 @@ public class GridSquare : Positional {
 
 	void ShowPreview ()
 	{
+		if (preview)
+			return;
+		this.preview = true;
 		grid.selectedPiece.gameObject.SetActive (true);
 		grid.selectedPiece.transform.position = this.transform.position;
+		grid.selectedPiece.position = this.position;
+	
+		grid.PreviewLazers (this.position, grid.selectedPiece.gameObject);
 	}
 
 	void HidePreview ()
 	{
-		grid.selectedPiece.gameObject.SetActive (false);
+		if (preview) {
+			grid.selectedPiece.gameObject.SetActive (false);
+			grid.ClearPreviews();
+			this.preview = false;
+		}
 	}
 
 	void HandleClick ()

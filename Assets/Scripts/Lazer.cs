@@ -9,7 +9,7 @@ public class Lazer : Positional {
 	private GameObject sprite;
 	public GameObject front;
 
-	public Color lazerColor;
+	private Color lazerColor;
 
 	private SpriteRenderer beamRenderer;
 	private SpriteRenderer hilightRenderer;
@@ -43,18 +43,39 @@ public class Lazer : Positional {
 		this.hilightRenderer.color = color;
 	}
 
+	public void SetVisibility(float alpha){
+		var beam = this.beamRenderer.color;
+		beam.a = alpha;
+		this.beamRenderer.color = beam;
+
+		var hilight = this.hilightRenderer.color;
+		hilight.a = alpha;
+		this.hilightRenderer.color = hilight;
+	}
+
 	public void DisableImpact(){
 		if(impact != null)
 			this.impact.SetActive (false);
 	}
 
-	public void AddImpact(GameObject hit, Vector2 position){
+	public void AddImpact(GameObject hit, Vector2 position, float alpha){
 		if (this.impact == null) {
 			impact = Instantiate(lazerImpactPrefab);
 			impact.transform.parent = this.transform;
 		}
 
-		this.impact.transform.FindChild("hilight").GetComponent<SpriteRenderer>().color = lazerColor;
+		var hilightRenderer = this.impact.transform.FindChild ("hilight").GetComponent<SpriteRenderer>();
+		hilightRenderer.color = lazerColor;
+
+		var hilight = hilightRenderer.color;
+		hilight.a = alpha;
+		hilightRenderer.color = hilight;
+
+		var circleRenderer = this.impact.GetComponent<SpriteRenderer> ();
+		var circle = circleRenderer.color;
+		circle.a = alpha;
+		circleRenderer.color = circle;
+
 		this.impact.transform.position = position;
 
 		this.impact.SetActive (true);
@@ -62,8 +83,8 @@ public class Lazer : Positional {
 		SetImpactLayerOrder (hit);
 	}
 
-	public void AddImpact(GameObject hit){
-		AddImpact (hit, this.transform.position);
+	public void AddImpact(GameObject hit, float alpha){
+		AddImpact (hit, this.transform.position, alpha);
 	}
 
 	public void DisableOffset(){

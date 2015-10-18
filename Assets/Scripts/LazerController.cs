@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System;
 
 public class LazerController : MonoBehaviour {
 
@@ -10,6 +11,7 @@ public class LazerController : MonoBehaviour {
 	private static List<GameObject> LAZER_POOL = new List<GameObject> ();
 
 	public Color lazerColor;
+	private Color previewColor;
 
 	private float impactLazerLength = 0.5f;
 
@@ -21,9 +23,13 @@ public class LazerController : MonoBehaviour {
 	void Awake(){
 		var lazerSprite = lazerPrefab.transform.FindChild ("sprite");
 		lazerSprite.localPosition = Vector2.zero;
-		
-		Lazer.length = lazerSprite.GetComponent<SpriteRenderer>().bounds.size.x;
+
+		var renderer = lazerSprite.GetComponent<SpriteRenderer> ();
+		Lazer.length = renderer.bounds.size.x;
 		lazerSprite.transform.Translate (new Vector3 (Lazer.length / 2,0,0));
+
+		this.previewColor = new Color(lazerColor.r, lazerColor.g, lazerColor.b);
+		this.previewColor.a = Constants.LAZER_PREVIEW_ALPHA;
 	}
 
 	void FixedUpdate () {
@@ -50,6 +56,7 @@ public class LazerController : MonoBehaviour {
 
 	void EndGame ()
 	{
+		firing = false;
 		lazerHit.GetComponent<Turret> ().Explode();
 	}
 
@@ -110,7 +117,7 @@ public class LazerController : MonoBehaviour {
 			lazerHit = this.turret.grid.objects[change];
 			
 			currentLazerSection.SetLayerOrder (lazerHit, true);
-			currentLazerSection.AddImpact(lazerHit);
+			currentLazerSection.AddImpact(lazerHit, 1);
 			
 			currentRange = 0;
 			firing = true;
@@ -122,7 +129,13 @@ public class LazerController : MonoBehaviour {
 	private Lazer StartLazerAt(Coordinate pos, Direction facing){
 		return StartLazerAt (pos, facing, 1);
 	}
-	
+
+	private Lazer StartLazerAt(Coordinate pos, Direction facing, float maxLength, float alpha){
+		var lazer = StartLazerAt (pos, facing, maxLength);
+		lazer.SetVisibility (alpha);
+		return lazer;
+	}
+
 	private Lazer StartLazerAt(Coordinate pos, Direction facing, float maxLength){
 		GameObject lazer;
 		
@@ -182,87 +195,89 @@ public class LazerController : MonoBehaviour {
 	*/
 	void HandleFiring ()
 	{
-		if (firing) {
-			
-			if (currentLazerSection == null) {
-				if(lazerPath.Count <= 0){
-					currentLazerSection = StartLazerAt ( Direction.ZERO, turret.GetFacing());
-					currentLazerSection.EnableOffset();
-					currentLazerSection.maxLength = impactLazerLength;
-					currentLazerSection.SetLayer("AccessoryBelow");
-				} else {
-					currentLazerSection = StartLazerAt (turret.GetFacing(), turret.GetFacing());
+		if (firing) {	
+			FireLazer (EndGame, Constants.LAZER_PREVIEW_ALPHA);		
+		}
+	}
+
+	void FireLazer (Action onImpact, float alpha)
+	{
+		InitLazer (alpha);
+		var currentLength = currentLazerSection.GetCurrentLength ();
+		var maxLength = currentLazerSection.maxLength;
+		bool exists = ObjectExists (turret.TranslateCoordinate (lazerPosition), lazerDirection);
+		if (currentLength < maxLength) {
+			currentLazerSection.SetLength (Mathf.Min (maxLength, currentLength + Constants.LAZER_SPEED + excess));
+			excess = currentLength + Constants.LAZER_SPEED - maxLength;
+		}
+		else {
+			do {
+				if (lazerHit != null) {
+					if (lazerHit.tag.Equals ("Turret")) {
+						onImpact();
+						break;
+						// TODO END GAME HERE;
+					}
+					else {
+						currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, impactLazerLength, alpha);
+						currentLazerSection.EnableOffset ();
+						currentLazerSection.SetLayerOrder (lazerHit, false);
+						lazerPosition = GetNextLazerPosition (currentLazerSection.facing);
+						lazerHit = null;
+					}
 				}
-				lazerPosition = GetNextLazerPosition (currentLazerSection.facing);
-				lazerDirection = currentLazerSection.facing;
-			}
-			
-			var currentLength = currentLazerSection.GetCurrentLength ();
-			var maxLength = currentLazerSection.maxLength;
-			
-			bool exists = ObjectExists(turret.TranslateCoordinate(lazerPosition), lazerDirection);
-			
-			if (currentLength < maxLength) {
-				currentLazerSection.SetLength (Mathf.Min (maxLength, currentLength + Constants.LAZER_SPEED + excess));
-				excess = currentLength + Constants.LAZER_SPEED - maxLength;
-			} else {
-				do {
-					if (lazerHit != null) {
-						
-						if(lazerHit.tag.Equals("Turret")){
-							firing = false;
-							EndGame();
-							break;
-							// TODO END GAME HERE;
-						} else {
-							currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, impactLazerLength);
-							
-							currentLazerSection.EnableOffset();
-							currentLazerSection.SetLayerOrder (lazerHit, false);
-							
-							lazerPosition = GetNextLazerPosition (currentLazerSection.facing);
-							lazerHit = null;
-						}
-					} else if (exists || currentRange < Grid.LAZER_MAX_RANGE) {
+				else
+					if (exists || currentRange < Grid.LAZER_MAX_RANGE) {
 						GameObject obj;
 						turret.grid.objects.TryGetValue (turret.TranslateCoordinate (lazerPosition), out obj);
-						
-						if (obj != null && !obj.tag.Equals("SafeZone")) {
+						if (obj != null && !obj.tag.Equals ("SafeZone")) {
 							lazerHit = obj;
-							
-							if(obj.tag.Equals (Constants.MIRROR_TAG)){
-								currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, impactLazerLength);
-								currentLazerSection.AddImpact(lazerHit);
-								
+							if (obj.tag.Equals (Constants.MIRROR_TAG)) {
+								currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, impactLazerLength, alpha);
+								currentLazerSection.AddImpact (lazerHit, alpha);
 								bool flipped = obj.GetComponent<Mirror> ().IsFlipped ();
 								lazerDirection = lazerDirection.mirror (flipped);
-								
-								exists = ObjectExists(turret.TranslateCoordinate(lazerPosition), lazerDirection);
-								
-							} else {
-								var raycast = Physics2D.Raycast(currentLazerSection.transform.position, lazerDirection.asVec2(), Mathf.Infinity, 1 << LayerMask.NameToLayer(Constants.OBSTACLE_LAYER));
-								var distance = (raycast.distance - Lazer.length / 2) / Lazer.length;
-								currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, distance);
-								currentLazerSection.AddImpact(lazerHit, raycast.point);
+								exists = ObjectExists (turret.TranslateCoordinate (lazerPosition), lazerDirection);
 							}
-							
+							else {
+								var raycast = Physics2D.Raycast (currentLazerSection.transform.position, lazerDirection.asVec2 (), Mathf.Infinity, 1 << LayerMask.NameToLayer (Constants.OBSTACLE_LAYER));
+								var distance = (raycast.distance - Lazer.length / 2) / Lazer.length;
+								currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, distance, alpha);
+								currentLazerSection.AddImpact (lazerHit, raycast.point, alpha);
+							}
 							currentLazerSection.SetLayerOrder (lazerHit, true);
-							
 							currentRange = 0;
-						} else {
-							currentLazerSection = StartLazerAt (lazerPosition, lazerDirection);
+						}
+						else {
+						currentLazerSection = StartLazerAt (lazerPosition, lazerDirection, 1, alpha);
 							lazerPosition = GetNextLazerPosition (currentLazerSection.facing);
 							currentRange++;
 						}
-					} else {
+					}
+					else {
 						firing = false;
 					}
-					currentLazerSection.SetLength(Mathf.Min (currentLazerSection.maxLength, excess));
-					excess -= currentLazerSection.GetCurrentLength();	
-					
-				} while(excess > 0 && firing);
+				currentLazerSection.SetLength (Mathf.Min (currentLazerSection.maxLength, excess));
+				excess -= currentLazerSection.GetCurrentLength ();
 			}
-			excess = Mathf.Max (excess, 0);
+			while (excess > 0 && firing);
+		}
+		excess = Mathf.Max (excess, 0);
+	}
+
+	void InitLazer (float alpha)
+	{
+		if (currentLazerSection == null) {
+			if (lazerPath.Count <= 0) {
+				currentLazerSection = StartLazerAt (Direction.ZERO, turret.GetFacing (), impactLazerLength, alpha);
+				currentLazerSection.EnableOffset ();
+				currentLazerSection.SetLayer ("AccessoryBelow");
+			}
+			else {
+				currentLazerSection = StartLazerAt (turret.GetFacing (), turret.GetFacing (), 1, alpha);
+			}
+			lazerPosition = GetNextLazerPosition (currentLazerSection.facing);
+			lazerDirection = currentLazerSection.facing;
 		}
 	}
 }

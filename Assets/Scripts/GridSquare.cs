@@ -13,7 +13,8 @@ public class GridSquare : Positional {
 	public Color activeColor;
 	public Color inactiveColor;
 
-	private bool preview = false;
+	private bool piecePreview = false;
+	private bool lazerPreview = false;
 
 	void Awake(){
 		this.renderer = this.GetComponent<SpriteRenderer> ();
@@ -47,22 +48,29 @@ public class GridSquare : Positional {
 
 	void ShowPreview ()
 	{
-		if (preview)
-			return;
-		this.preview = true;
-		grid.selectedPiece.gameObject.SetActive (true);
-		grid.selectedPiece.transform.position = this.transform.position;
-		grid.selectedPiece.position = this.position;
-	
-		grid.PreviewLazers (this.position, grid.selectedPiece.gameObject);
+		if (!piecePreview) {
+			this.piecePreview = true;
+			grid.selectedPiece.gameObject.SetActive (true);
+			grid.selectedPiece.transform.position = this.transform.position;
+			grid.selectedPiece.position = this.position;
+		}
+
+		if (!lazerPreview && !grid.Firing ()) {
+			this.lazerPreview = true;
+			grid.PreviewLazers (grid.selectedPiece);
+		}
 	}
 
 	void HidePreview ()
 	{
-		if (preview) {
+		if (piecePreview) {
 			grid.selectedPiece.gameObject.SetActive (false);
+			this.piecePreview = false;
+		}
+
+		if (lazerPreview) {
 			grid.ClearPreviews();
-			this.preview = false;
+			this.lazerPreview = false;
 		}
 	}
 

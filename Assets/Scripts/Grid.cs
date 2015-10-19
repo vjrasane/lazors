@@ -38,7 +38,7 @@ public class Grid : MonoBehaviour {
 		selectedPiece = Instantiate (mirrorPrefab).GetComponent<Mirror>();
 		selectedPiece.GetComponent<SpriteRenderer> ().color = previewColor;
 		selectedPiece.GetComponent<BoxCollider2D> ().enabled = false;
-
+		selectedPiece.preview = true;
 		selectedPiece.gameObject.SetActive (false);
 
 		SQUARE_SIZE = squareBlock.GetComponent<BoxCollider2D> ().bounds.size.x;
@@ -58,7 +58,7 @@ public class Grid : MonoBehaviour {
 		if (Input.GetKeyDown (KeyCode.Tab)) {
 			selectedPiece.Flip();
 			ClearPreviews();
-			PreviewLazers(selectedPiece.position, selectedPiece.gameObject);
+			PreviewLazers(selectedPiece);
 		}
 	}
 
@@ -98,7 +98,7 @@ public class Grid : MonoBehaviour {
 		if (flipped)
 			mirror.GetComponent<Mirror> ().Flip ();
 
-		RerouteLazers(pos, flipped);
+		RerouteLazers(mirror);
 	}
 
 	private Positional Put(Coordinate pos, GameObject prefab){
@@ -111,16 +111,20 @@ public class Grid : MonoBehaviour {
 		return obj;
 	}
 
-	public void RerouteLazers(Coordinate change, bool flipped){
-		turrets.ForEach(t => t.Reroute(change, flipped));
+	public void RerouteLazers(Positional change){
+		turrets.ForEach(t => t.Reroute(change));
 	}
 
-	public void PreviewLazers(Coordinate change, GameObject obj){
-		turrets.ForEach(t => t.Preview(change, obj));
+	public void PreviewLazers(Positional change){
+		turrets.ForEach(t => t.Preview(change));
 	}
 
 	public void ClearPreviews(){
 		turrets.ForEach(t => t.ClearPreview());
+	}
+
+	public bool Firing(){
+		return turrets.Exists (t => t.IsFiring());
 	}
 
 	private Positional InstantiateAt(Coordinate position, GameObject prefab) {

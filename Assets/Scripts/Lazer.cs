@@ -28,8 +28,8 @@ public class Lazer : Positional {
 
 	// Use this for initialization
 	void Awake () {
-		this.front = this.transform.FindChild ("front").gameObject;
 		this.sprite = this.transform.FindChild("sprite").gameObject;
+		this.front = sprite.transform.FindChild ("front").gameObject;
 		this.beamRenderer = sprite.GetComponent<SpriteRenderer> ();
 		this.hilightRenderer = sprite.transform.FindChild("hilight").GetComponent<SpriteRenderer> ();
 
@@ -63,8 +63,8 @@ public class Lazer : Positional {
 			this.impact.SetActive (false);
 	}
 
-	public void AddImpact(Positional hit, Vector2 position, bool preview){
-		AddImpact (hit, position);
+	public void AddImpact(bool preview){
+		AddImpact ();
 
 		var hilightRenderer = this.impact.transform.FindChild ("hilight").GetComponent<SpriteRenderer> ();
 		var hilight = hilightRenderer.color;
@@ -92,7 +92,7 @@ public class Lazer : Positional {
 		var hilightRenderer = this.impact.transform.FindChild ("hilight").GetComponent<SpriteRenderer>();
 		hilightRenderer.color = lazerColor;
 		
-		this.impact.transform.position = hit.transform.position;
+		this.impact.transform.position = this.front.transform.position;
 		
 		this.impact.SetActive (true);
 		
@@ -101,26 +101,10 @@ public class Lazer : Positional {
 		return this.impact;
 	}
 
-	private GameObject AddImpact(Positional hit, Vector2 position){
-		if (this.impact == null) {
-			impact = Instantiate(lazerImpactPrefab);
-			impact.transform.parent = this.transform;
-		}
-
-		var hilightRenderer = this.impact.transform.FindChild ("hilight").GetComponent<SpriteRenderer>();
-		hilightRenderer.color = lazerColor;
-
+	public GameObject AddImpact(bool preview, Vector2 position){
+		AddImpact (preview);
 		this.impact.transform.position = position;
-
-		this.impact.SetActive (true);
-		
-		SetImpactLayerOrder (hit);
-
 		return this.impact;
-	}
-
-	public void AddImpact(Positional hit, bool preview){
-		AddImpact (hit, this.transform.position, preview);
 	}
 
 	public void DisableOffset(){
@@ -158,7 +142,7 @@ public class Lazer : Positional {
 
 	public static bool IsFront (Coordinate direction, Positional hit, bool incoming)
 	{
-		if (!hit.tag.Equals(Constants.MIRROR_TAG) )
+		if (hit == null || !hit.tag.Equals(Constants.MIRROR_TAG) )
 			return true;
 		else {
 			var flipped = hit.GetComponent<Mirror>().IsFlipped();

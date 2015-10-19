@@ -65,14 +65,14 @@ public class Turret : Positional {
 		HandleExplode ();
 	}
 
-	public void Reroute (Coordinate change, bool flipped)
+	public void Reroute (Positional change)
 	{
-		this.lazer.Reroute (change, flipped);
+		this.lazer.Reroute (change);
 	}
 
-	public void Preview (Coordinate change, GameObject obj)
+	public void Preview (Positional change)
 	{
-		this.lazer.Preview (change, obj);
+		this.lazer.Preview (change);
 	}
 
 	public void ClearPreview ()
@@ -104,11 +104,17 @@ public class Turret : Positional {
 				gunRenderer.color = destroyedColor;
 
 				lazer.CeaseFire();
+				lazer.ClearPreview();
 
 				exploding = false;
 				destroyed = true;
 			}
 		}
+	}
+
+	public bool IsFiring ()
+	{
+		return this.lazer.firing;
 	}
 	
 	public Coordinate TranslateCoordinate(Coordinate pos){

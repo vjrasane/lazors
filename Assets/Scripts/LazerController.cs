@@ -20,8 +20,6 @@ public class LazerController : MonoBehaviour {
 	private Lazer currentLazerSection;
 
 
-
-
 	void Awake(){
 		var lazerSprite = lazerPrefab.transform.FindChild ("sprite");
 		lazerSprite.localPosition = Vector2.zero;
@@ -162,7 +160,7 @@ public class LazerController : MonoBehaviour {
 		lazerScript.SetLength (0);
 		lazerScript.maxLength = maxLength;
 		lazerScript.position = pos;
-		lazerScript.layerOrderMultiplier = turret.playerNumber;
+		lazerScript.layerOrderMultiplier = turret.player.number;
 		lazerScript.SendToBack ();
 		
 		path.Add (lazerScript);
@@ -343,6 +341,7 @@ public class LazerController : MonoBehaviour {
 		var lazer = StartLazerAt (Direction.ZERO, turret.GetFacing (), impactLazerLength, preview);
 		lazer.EnableOffset ();
 		lazer.SetLayer ("AccessoryBelow");
+		lazer.SendToBack ();
 		return lazer;
 	}
 }

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 
 public class Turret : Positional {
 
+	public Player player;
+
 	private Transform gun;
 	private LazerController lazer;
 	private Direction facing = Direction.LEFT;
@@ -23,8 +25,6 @@ public class Turret : Positional {
 
 	public bool active = true;
 
-	public int playerNumber = 0;
-
 	// Use this for initialization
 	void Awake () {
 		gun = this.transform.FindChild ("gun");
@@ -43,7 +43,7 @@ public class Turret : Positional {
 
 	}
 
-	void Start(){
+	public void Fire(){
 		lazer.Fire ();
 	}
 

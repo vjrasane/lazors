@@ -5,9 +5,11 @@ public class Scenario
 {
 	public Dictionary<Coordinate, GamePiece> pieces = new Dictionary<Coordinate, GamePiece> ();
 
+	public int playerCount = 0;
+
 	public Scenario(){
-		pieces.Add (Direction.LEFT.toCoordinate(), new Turret(Direction.LEFT));
-		pieces.Add (Direction.RIGHT.toCoordinate(), new Turret(Direction.RIGHT));
+		pieces.Add (Direction.LEFT.toCoordinate(), new Turret(Direction.LEFT, ++playerCount));
+		pieces.Add (Direction.RIGHT.toCoordinate(), new Turret(Direction.RIGHT, ++playerCount));
 
 		Surround (Direction.LEFT);
 		Surround (Direction.RIGHT);
@@ -25,9 +27,15 @@ public class Scenario
 
 	public class Turret : GamePiece{
 		public Direction facing;
+		public int playerNum = -1;
 
-		public Turret(Direction facing){
+		public Turret(Direction facing) : this(facing, -1){
+
+		}
+
+		public Turret(Direction facing, int playerNum){
 			this.facing = facing;
+			this.playerNum = playerNum;
 		}
 	}
 

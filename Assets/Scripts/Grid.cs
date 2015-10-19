@@ -24,6 +24,11 @@ public class Grid : MonoBehaviour {
 	public Dictionary<Coordinate, Positional> objects = new Dictionary<Coordinate, Positional> ();
 	private Dictionary<Coordinate, GridSquare> squares = new Dictionary<Coordinate, GridSquare> ();
 
+	private List<Player> players = new List<Player> ();
+
+	private Player inTurn;
+	private bool turnDone = false;
+
 	private List<Turret> turrets = new List<Turret> ();
 
 	public static float SQUARE_SIZE = 0.0f;
@@ -51,6 +56,9 @@ public class Grid : MonoBehaviour {
 		CreateScenario ();
 
 		DrawSquares ();
+
+		inTurn = players.First ();
+		turrets.ForEach (t => t.Fire ());
 	}
 
 
@@ -59,6 +67,22 @@ public class Grid : MonoBehaviour {
 			selectedPiece.Flip();
 			ClearPreviews();
 			PreviewLazers(selectedPiece);
+		}
+
+		CheckTurn ();
+	}
+
+	public void ChangeTurn(){
+		turnDone = true;
+	}
+
+	void CheckTurn ()
+	{
+		if (turnDone && !Firing ()) {
+			var current = this.players.IndexOf(inTurn);
+			inTurn = this.players[++current % this.players.Count];
+			turnDone = false;
+			Debug.Log(inTurn.name);
 		}
 	}
 
@@ -98,6 +122,7 @@ public class Grid : MonoBehaviour {
 		if (flipped)
 			mirror.GetComponent<Mirror> ().Flip ();
 
+		ChangeTurn ();
 		RerouteLazers(mirror);
 	}
 
@@ -173,7 +198,9 @@ public class Grid : MonoBehaviour {
 			scenario = new Scenario();
 		}
 
-		int playerCounter = 1;
+		if (this.players.Count < scenario.playerCount)
+			GeneratePlayers (scenario.playerCount);
+
 		foreach (Coordinate coord in scenario.pieces.Keys) {
 			var piece = scenario.pieces[coord];
 
@@ -181,18 +208,30 @@ public class Grid : MonoBehaviour {
 				// No need to translate here
 				objects.Add (coord, InstantiateAt(coord, safeZonePrefab, true));
 			} else if(piece.GetType() == typeof(Scenario.Turret)){
-				var facing = ((Scenario.Turret)piece).facing;
+				Scenario.Turret turretPiece = ((Scenario.Turret)piece);
+				var facing = turretPiece.facing;
 				var turret = InstantiateAt(coord, turretPrefab, true);
 
-				UIController.AddPlayerLabel("Player " + playerCounter, turret.transform.position);
-
 				var turretScript = turret.GetComponent<Turret>();
-				turretScript.playerNumber = playerCounter++;
 				turretScript.RotateGun(facing);
 
+				if(turretPiece.playerNum > 0) {
+					var player = players[turretPiece.playerNum - 1];
+					UIController.AddPlayerLabel(player.name, turret.transform.position);
+					turretScript.player = player;
+				}
+				
 				turrets.Add(turretScript);
 				objects.Add (coord, turret);
 			}
+		}
+	}
+
+	void GeneratePlayers (int count)
+	{
+		for (var i = 0; i < count; i++) {
+			var num = i + 1;
+			players.Add(new Player("Player " + num, num));
 		}
 	}
 

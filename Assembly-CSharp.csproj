@@ -54,6 +54,7 @@
      <Compile Include="Assets\Scripts\Lazer.cs" />
      <Compile Include="Assets\Scripts\LazerController.cs" />
      <Compile Include="Assets\Scripts\Mirror.cs" />
+     <Compile Include="Assets\Scripts\Player.cs" />
      <Compile Include="Assets\Scripts\Positional.cs" />
      <Compile Include="Assets\Scripts\SafeZone.cs" />
      <Compile Include="Assets\Scripts\Scenario.cs" />

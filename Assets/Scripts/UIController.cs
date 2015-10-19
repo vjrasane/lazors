@@ -8,6 +8,12 @@ public class UIController : MonoBehaviour {
 	
 	public Text playerLabelPrefab;
 
+	private Text turnText;
+
+	private Animator welcomeTextAnim;
+	private Animator turnTextAnim;
+
+
 	public float labelOffset = 0.0f;
 
 	private Dictionary<Text, Vector3> playerLabelPositions = new Dictionary<Text, Vector3>();
@@ -17,9 +23,27 @@ public class UIController : MonoBehaviour {
 	}
 	// Use this for initialization
 	void Start () {
-	
+		turnText = this.transform.FindChild ("turn_text").GetComponent<Text> ();
+
+		turnTextAnim = turnText.GetComponent<Animator> ();
+		welcomeTextAnim = this.transform.FindChild ("welcome_text").GetComponent<Animator>();
+
 	}
-	
+
+	public void asdasd(){
+
+	}
+
+	public static void DisplayWelcomeText(){
+		INSTANCE.welcomeTextAnim.SetTrigger ("Enter");
+
+	}
+
+	public static void DisplayTurnText(string playerName){
+		INSTANCE.turnTextAnim.SetTrigger ("Enter");
+		INSTANCE.turnText.text = playerName + "'s turn";
+	}
+
 	// Update is called once per frame
 	void Update () {
 		foreach (Text label in playerLabelPositions.Keys) {

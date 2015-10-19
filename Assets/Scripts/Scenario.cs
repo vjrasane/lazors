@@ -4,6 +4,7 @@ using System.Collections.Generic;
 public class Scenario
 {
 	public Dictionary<Coordinate, GamePiece> pieces = new Dictionary<Coordinate, GamePiece> ();
+	public List<Move> moves = new List<Move> ();
 
 	public int playerCount = 0;
 
@@ -21,6 +22,33 @@ public class Scenario
 			if(!pieces.ContainsKey(target))
 				pieces.Add (target, SafeZone.INSTANCE);
 		}
+	}
+
+	public abstract class Move : Positional {
+
+		public Player player;
+
+		public Move(Coordinate pos, Player player){
+			this.position = pos;
+			this.player = player;
+		}
+	}
+
+	public class PlaceMirror : Move {
+		
+		public bool flipped;
+		
+		public PlaceMirror(Coordinate pos, Player player, bool flipped) : base(pos, player){
+			this.flipped = flipped;
+		}
+	}
+
+	public class FlipMirror : Move {
+		public FlipMirror(Coordinate pos, Player player) : base(pos, player){}
+	}
+
+	public class PlaceSafeZone : Move {
+		public PlaceSafeZone(Coordinate pos, Player player) : base(pos, player){}
 	}
 
 	public interface GamePiece{};

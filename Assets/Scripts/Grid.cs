@@ -58,9 +58,16 @@ public class Grid : MonoBehaviour {
 		DrawSquares ();
 
 		inTurn = players.First ();
-		turrets.ForEach (t => t.Fire ());
+
+		UIController.DisplayWelcomeText ();
+		UIController.DisplayTurnText (inTurn.name);
+
+		Invoke("Fire", 1f);
 	}
 
+	void Fire(){
+		turrets.ForEach (t => t.Fire ());
+	}
 
 	void Update(){
 		if (Input.GetKeyDown (KeyCode.Tab) && selectedPiece.gameObject.activeSelf) {
@@ -82,7 +89,7 @@ public class Grid : MonoBehaviour {
 			var current = this.players.IndexOf(inTurn);
 			inTurn = this.players[++current % this.players.Count];
 			turnDone = false;
-			Debug.Log(inTurn.name);
+			UIController.DisplayTurnText (inTurn.name);
 		}
 	}
 

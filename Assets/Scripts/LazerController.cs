@@ -10,7 +10,7 @@ public class LazerController : MonoBehaviour {
 	public GameObject lazerPrefab;
 	private List<Lazer> lazerPath = new List<Lazer>();
 	private List<Lazer> previewPath = new List<Lazer>();
-	private static List<GameObject> LAZER_POOL = new List<GameObject> ();
+	private static List<Lazer> LAZER_POOL = new List<Lazer> ();
 
 	public Color lazerColor;
 	private Color previewColor;
@@ -21,6 +21,9 @@ public class LazerController : MonoBehaviour {
 
 
 	void Awake(){
+		if (LAZER_POOL.Count < Constants.LAZER_MAX_RANGE * 2)
+			PopulatePool ();
+
 		var lazerSprite = lazerPrefab.transform.FindChild ("sprite");
 		lazerSprite.localPosition = Vector2.zero;
 
@@ -30,6 +33,14 @@ public class LazerController : MonoBehaviour {
 
 		this.previewColor = new Color(lazerColor.r, lazerColor.g, lazerColor.b);
 		this.previewColor.a = Constants.LAZER_PREVIEW_ALPHA;
+	}
+
+	void PopulatePool ()
+	{
+		for (var i = 0; i < Constants.LAZER_MAX_RANGE; i++) {
+			var lazer = Instantiate (lazerPrefab).GetComponent<Lazer>();
+			MoveToPool(lazer);
+		}
 	}
 
 	void FixedUpdate () {
@@ -70,15 +81,15 @@ public class LazerController : MonoBehaviour {
 		
 		lazer.DisableOffset ();
 		lazer.DisableImpact ();
-		
+
 		lazer.gameObject.SetActive (false);
 		
-		LAZER_POOL.Add (lazer.gameObject);
+		LAZER_POOL.Add (lazer);
 	}
 	
-	private GameObject GetFromPool(){
-		var lazer = LAZER_POOL[0].gameObject;
-		lazer.SetActive(true);
+	private Lazer GetFromPool(){
+		var lazer = LAZER_POOL[0];
+		lazer.gameObject.SetActive(true);
 		LAZER_POOL.RemoveAt (0);
 		
 		return lazer;
@@ -138,34 +149,33 @@ public class LazerController : MonoBehaviour {
 		return lazer;
 	}
 
-	GameObject GetLazerInstance ()
+	Lazer GetLazerInstance ()
 	{
 		if (LAZER_POOL.Count <= 0)
-			return Instantiate (lazerPrefab);
+			return Instantiate (lazerPrefab).GetComponent<Lazer>();
 		else {
 			return GetFromPool ();
 		}
 	}
 
 	private Lazer StartLazerAt(Coordinate pos, Direction facing, float maxLength, List<Lazer> path){
-		GameObject lazer = GetLazerInstance ();
+		Lazer lazer = GetLazerInstance ();
 		
 		lazer.transform.parent = this.transform;
 		lazer.transform.localPosition = Vector2.zero;
 		lazer.transform.Translate(pos.asVec3() * Lazer.length);
+
+		lazer.SetColor (lazerColor);
+		lazer.Rotate (facing);
+		lazer.SetLength (0);
+		lazer.maxLength = maxLength;
+		lazer.position = pos;
+		lazer.layerOrderMultiplier = turret.player.number;
+		lazer.SendToBack ();
 		
-		var lazerScript = lazer.GetComponent<Lazer> ();
-		lazerScript.SetColor (lazerColor);
-		lazerScript.Rotate (facing);
-		lazerScript.SetLength (0);
-		lazerScript.maxLength = maxLength;
-		lazerScript.position = pos;
-		lazerScript.layerOrderMultiplier = turret.player.number;
-		lazerScript.SendToBack ();
+		path.Add (lazer);
 		
-		path.Add (lazerScript);
-		
-		return lazerScript;
+		return lazer;
 	}
 
 	bool ObjectExists(Lazer lazer){
@@ -302,6 +312,7 @@ public class LazerController : MonoBehaviour {
 		case "Turret":
 			if(!preview) {
 				EndGame(section.hit);
+				section.AddImpact ();
 				firing = false;
 			} else {
 				section.AddImpact (preview);

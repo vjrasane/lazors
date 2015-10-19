@@ -9,7 +9,7 @@ public class Mirror : Positional {
 		this.flipped = !flipped;
 		this.transform.Rotate (new Vector3 (0, 180, 0));
 
-		if(this.position != null && !this.preview)
+		if(this.position != null)
 			grid.RerouteLazers (this.position, this.flipped);
 	}
 

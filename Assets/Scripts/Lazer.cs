@@ -24,12 +24,17 @@ public class Lazer : Positional {
 
 	public int layerOrderMultiplier = 1;
 
+	public Positional hit;
+
 	// Use this for initialization
 	void Awake () {
 		this.front = this.transform.FindChild ("front").gameObject;
 		this.sprite = this.transform.FindChild("sprite").gameObject;
 		this.beamRenderer = sprite.GetComponent<SpriteRenderer> ();
 		this.hilightRenderer = sprite.transform.FindChild("hilight").GetComponent<SpriteRenderer> ();
+
+		this.impact = this.transform.FindChild ("lazer_impact").gameObject;
+		DisableImpact ();
 
 		SetColor(lazerColor);
 
@@ -58,7 +63,7 @@ public class Lazer : Positional {
 			this.impact.SetActive (false);
 	}
 
-	public void AddImpact(GameObject hit, Vector2 position, bool preview){
+	public void AddImpact(Positional hit, Vector2 position, bool preview){
 		AddImpact (hit, position);
 
 		var hilightRenderer = this.impact.transform.FindChild ("hilight").GetComponent<SpriteRenderer> ();
@@ -78,7 +83,25 @@ public class Lazer : Positional {
 		circleRenderer.color = circle;
 	}
 
-	private GameObject AddImpact(GameObject hit, Vector2 position){
+	public GameObject AddImpact(){
+		if (this.impact == null) {
+			impact = Instantiate(lazerImpactPrefab);
+			impact.transform.parent = this.transform;
+		}
+		
+		var hilightRenderer = this.impact.transform.FindChild ("hilight").GetComponent<SpriteRenderer>();
+		hilightRenderer.color = lazerColor;
+		
+		this.impact.transform.position = hit.transform.position;
+		
+		this.impact.SetActive (true);
+		
+		SetImpactLayerOrder (hit);
+		
+		return this.impact;
+	}
+
+	private GameObject AddImpact(Positional hit, Vector2 position){
 		if (this.impact == null) {
 			impact = Instantiate(lazerImpactPrefab);
 			impact.transform.parent = this.transform;
@@ -96,7 +119,7 @@ public class Lazer : Positional {
 		return this.impact;
 	}
 
-	public void AddImpact(GameObject hit, bool preview){
+	public void AddImpact(Positional hit, bool preview){
 		AddImpact (hit, this.transform.position, preview);
 	}
 
@@ -128,12 +151,12 @@ public class Lazer : Positional {
 	
 	}
 
-	public void SetLayerOrder (GameObject hit, bool incoming)
+	public void SetLayerOrder (Positional hit, bool incoming)
 	{
 		SendTo (IsFront(this.facing, hit, incoming));
 	}
 
-	public static bool IsFront (Coordinate direction, GameObject hit, bool incoming)
+	public static bool IsFront (Coordinate direction, Positional hit, bool incoming)
 	{
 		if (!hit.tag.Equals(Constants.MIRROR_TAG) )
 			return true;
@@ -153,7 +176,7 @@ public class Lazer : Positional {
 		}
 	}
 
-	void SetImpactLayerOrder (GameObject hit)
+	void SetImpactLayerOrder (Positional hit)
 	{
 		// Lazer is INCOMING here
 		var circleRenderer = this.impact.GetComponent<SpriteRenderer> ();

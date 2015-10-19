@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class SafeZone : MonoBehaviour {
+public class SafeZone : Positional {
 
 	// Use this for initialization
 	void Start () {

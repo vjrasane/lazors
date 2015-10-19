@@ -44,6 +44,10 @@ public class Coordinate : object {
 	public static Coordinate operator *(int multiplier, Coordinate c1){
 		return c1 * multiplier;
 	}
+
+	public float distance(Coordinate other){
+		return Mathf.Sqrt(Mathf.Pow(this.x - other.x, 2) + Mathf.Pow(this.y - other.y, 2));
+	}
 	
 	public override bool Equals(object obj) 
 	{

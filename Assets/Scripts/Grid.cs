@@ -21,7 +21,7 @@ public class Grid : MonoBehaviour {
 
 	public static int LAZER_MAX_RANGE = Constants.LAZER_MAX_RANGE;
 
-	public Dictionary<Coordinate, GameObject> objects = new Dictionary<Coordinate, GameObject> ();
+	public Dictionary<Coordinate, Positional> objects = new Dictionary<Coordinate, Positional> ();
 	private Dictionary<Coordinate, GridSquare> squares = new Dictionary<Coordinate, GridSquare> ();
 
 	private List<Turret> turrets = new List<Turret> ();
@@ -38,7 +38,7 @@ public class Grid : MonoBehaviour {
 		selectedPiece = Instantiate (mirrorPrefab).GetComponent<Mirror>();
 		selectedPiece.GetComponent<SpriteRenderer> ().color = previewColor;
 		selectedPiece.GetComponent<BoxCollider2D> ().enabled = false;
-		selectedPiece.preview = true;
+
 		selectedPiece.gameObject.SetActive (false);
 
 		SQUARE_SIZE = squareBlock.GetComponent<BoxCollider2D> ().bounds.size.x;
@@ -101,7 +101,7 @@ public class Grid : MonoBehaviour {
 		RerouteLazers(pos, flipped);
 	}
 
-	private GameObject Put(Coordinate pos, GameObject prefab){
+	private Positional Put(Coordinate pos, GameObject prefab){
 		var obj = InstantiateAt (pos, prefab, true);
 
 		objects.Add (pos, obj);
@@ -123,25 +123,23 @@ public class Grid : MonoBehaviour {
 		turrets.ForEach(t => t.ClearPreview());
 	}
 
-	private GameObject InstantiateAt(Coordinate position, GameObject prefab) {
+	private Positional InstantiateAt(Coordinate position, GameObject prefab) {
 		return InstantiateAt (position, prefab, false);
 	}
 
-	private GameObject InstantiateAt(Coordinate position, GameObject prefab, bool checkBounds){
+	private Positional InstantiateAt(Coordinate position, GameObject prefab, bool checkBounds){
 		var obj = Instantiate (prefab);
 		obj.transform.parent = this.transform;
 		obj.transform.localPosition = GetPosition (position);
 
 		Positional positional = obj.GetComponent<Positional>();
-		if (positional != null) {
-			positional.position = position;
-			positional.grid = this;
-		}
+		positional.position = position;
+		positional.grid = this;
 
 		if (checkBounds)
 			CheckBounds (position);
 
-		return obj;
+		return positional;
 	}
 
 	void CheckBounds (Coordinate position)

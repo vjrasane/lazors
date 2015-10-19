@@ -66,6 +66,8 @@ public class LazerController : MonoBehaviour {
 		lazer.transform.localPosition = Vector2.zero;
 
 		lazer.hit = null;
+		lazer.SetLength (0);
+		lazer.maxLength = 1;
 		lazer.ResetLayer ();
 		
 		lazer.DisableOffset ();
@@ -247,7 +249,7 @@ public class LazerController : MonoBehaviour {
 		} else {
 
 			var exists = ObjectExists (section);
-			while (section.hit == null && (distance > 0 || previewing || exists) && (currentRange < Grid.LAZER_MAX_RANGE)) {
+			while (section.hit == null && (distance > 0 || previewing) && (exists || (currentRange < Grid.LAZER_MAX_RANGE))) {
 				var nextPos = section.position + section.facing;
 				var nextDir = section.facing;
 
@@ -257,6 +259,7 @@ public class LazerController : MonoBehaviour {
 					hit = turret.grid.objects [translated];
 
 				var range = CalculateLength (section.transform.position, section.facing.asVec2 (), hit);
+			
 				section = StartLazerAt (nextPos, nextDir, range, previewing);
 		
 				section.maxLength = range;

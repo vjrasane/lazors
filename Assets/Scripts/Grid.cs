@@ -55,7 +55,7 @@ public class Grid : MonoBehaviour {
 
 
 	void Update(){
-		if (Input.GetKeyDown (KeyCode.Tab)) {
+		if (Input.GetKeyDown (KeyCode.Tab) && selectedPiece.gameObject.activeSelf) {
 			selectedPiece.Flip();
 			ClearPreviews();
 			PreviewLazers(selectedPiece);

@@ -23,7 +23,7 @@ public class Turret : Positional {
 
 	private bool destroyed = false;
 
-	public bool active = true;
+	private bool active = true;
 
 	// Use this for initialization
 	void Awake () {
@@ -65,14 +65,13 @@ public class Turret : Positional {
 		HandleExplode ();
 	}
 
-	public void Reroute (Positional change)
-	{
-		this.lazer.Reroute (change);
+	public bool IsActive(){
+		return active && !destroyed;
 	}
 
-	public void Preview (Positional change)
+	public void Preview ()
 	{
-		this.lazer.Preview (change);
+		this.lazer.Preview ();
 	}
 
 	public void ClearPreview ()
@@ -134,12 +133,5 @@ public class Turret : Positional {
 
 		this.exploding = true;
 	}
-
-
-
-
-	 
-
-
 
 }

@@ -19,7 +19,7 @@ public class Grid : MonoBehaviour {
 	private int maxY = 0;
 	private int minY = 0;
 
-	public static int LAZER_MAX_RANGE = Constants.LAZER_MAX_RANGE;
+	public static int LAZER_MAX_RANGE = Constants.LAZER_MIN_RANGE;
 
 	public Dictionary<Coordinate, Positional> objects = new Dictionary<Coordinate, Positional> ();
 	private Dictionary<Coordinate, GridSquare> squares = new Dictionary<Coordinate, GridSquare> ();
@@ -34,17 +34,17 @@ public class Grid : MonoBehaviour {
 	public static float SQUARE_SIZE = 0.0f;
 	private Coordinate center;
 
-	public Mirror selectedPiece;
+	public Mirror previewPiece;
 
 	void Awake(){
 		center = new Coordinate((int)(Constants.GRID_MAX_SIZE / 2), (int)(Constants.GRID_MAX_SIZE / 2));
 		var squareBlock = InstantiateAt(TranslateCoordinate(center), safeZonePrefab);
 
-		selectedPiece = Instantiate (mirrorPrefab).GetComponent<Mirror>();
-		selectedPiece.GetComponent<SpriteRenderer> ().color = previewColor;
-		selectedPiece.GetComponent<BoxCollider2D> ().enabled = false;
-		selectedPiece.preview = true;
-		selectedPiece.gameObject.SetActive (false);
+		previewPiece = Instantiate (mirrorPrefab).GetComponent<Mirror>();
+		previewPiece.GetComponent<SpriteRenderer> ().color = previewColor;
+		previewPiece.GetComponent<BoxCollider2D> ().enabled = false;
+		previewPiece.preview = true;
+		previewPiece.gameObject.SetActive (false);
 
 		SQUARE_SIZE = squareBlock.GetComponent<BoxCollider2D> ().bounds.size.x;
 
@@ -62,18 +62,18 @@ public class Grid : MonoBehaviour {
 		UIController.DisplayWelcomeText ();
 		UIController.DisplayTurnText (inTurn.name);
 
-		Invoke("Fire", 1f);
+		FireTurrets ();
 	}
 
-	void Fire(){
+	public void FireTurrets(){
 		turrets.ForEach (t => t.Fire ());
 	}
 
 	void Update(){
-		if (Input.GetKeyDown (KeyCode.Tab) && selectedPiece.gameObject.activeSelf) {
-			selectedPiece.Flip();
+		if (Input.GetKeyDown (KeyCode.Tab) && previewPiece.gameObject.activeSelf) {
+			previewPiece.Flip();
 			ClearPreviews();
-			PreviewLazers(selectedPiece);
+			PreviewLazers();
 		}
 
 		CheckTurn ();
@@ -85,7 +85,7 @@ public class Grid : MonoBehaviour {
 
 	void CheckTurn ()
 	{
-		if (turnDone && !Firing ()) {
+		if (turnDone) {
 			var current = this.players.IndexOf(inTurn);
 			inTurn = this.players[++current % this.players.Count];
 			turnDone = false;
@@ -130,7 +130,7 @@ public class Grid : MonoBehaviour {
 			mirror.GetComponent<Mirror> ().Flip ();
 
 		ChangeTurn ();
-		RerouteLazers(mirror);
+		FireTurrets();
 	}
 
 	private Positional Put(Coordinate pos, GameObject prefab){
@@ -143,20 +143,12 @@ public class Grid : MonoBehaviour {
 		return obj;
 	}
 
-	public void RerouteLazers(Positional change){
-		turrets.ForEach(t => t.Reroute(change));
-	}
-
-	public void PreviewLazers(Positional change){
-		turrets.ForEach(t => t.Preview(change));
+	public void PreviewLazers(){
+		turrets.ForEach(t => t.Preview());
 	}
 
 	public void ClearPreviews(){
 		turrets.ForEach(t => t.ClearPreview());
-	}
-
-	public bool Firing(){
-		return turrets.Exists (t => t.IsFiring());
 	}
 
 	private Positional InstantiateAt(Coordinate position, GameObject prefab) {
@@ -185,11 +177,7 @@ public class Grid : MonoBehaviour {
 		maxY = Mathf.Max (position.y, maxY);
 		minY = Mathf.Min (position.y, minY);
 
-		LAZER_MAX_RANGE = GetMaxValue (maxX, -minX, maxY, -minY, LAZER_MAX_RANGE);
-	}
-
-	int GetMaxValue(params int[] values){
-		return values.Max ();
+		LAZER_MAX_RANGE = Mathf.Max (maxX - minX, maxY - minY) + Constants.LAZER_MIN_RANGE;
 	}
 
 	Vector2 GetPosition (Coordinate pos)

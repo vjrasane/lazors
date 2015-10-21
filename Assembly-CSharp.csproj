@@ -51,8 +51,12 @@
      <Compile Include="Assets\Scripts\Direction.cs" />
      <Compile Include="Assets\Scripts\Grid.cs" />
      <Compile Include="Assets\Scripts\GridSquare.cs" />
-     <Compile Include="Assets\Scripts\Lazer.cs" />
-     <Compile Include="Assets\Scripts\LazerController.cs" />
+     <Compile Include="Assets\Scripts\Lazer\Lazer.cs" />
+     <Compile Include="Assets\Scripts\Lazer\LazerController.cs" />
+     <Compile Include="Assets\Scripts\Lazer\LazerDirect.cs" />
+     <Compile Include="Assets\Scripts\Lazer\LazerHit.cs" />
+     <Compile Include="Assets\Scripts\Lazer\LazerImpact.cs" />
+     <Compile Include="Assets\Scripts\Lazer\LazerStraight.cs" />
      <Compile Include="Assets\Scripts\Mirror.cs" />
      <Compile Include="Assets\Scripts\Player.cs" />
      <Compile Include="Assets\Scripts\Positional.cs" />

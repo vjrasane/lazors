@@ -14,18 +14,30 @@ public class Direction : Coordinate {
 	public static Direction DOWN_RIGHT = DOWN + RIGHT;
 	public static Direction TOP_LEFT = TOP + LEFT;
 	public static Direction DOWN_LEFT = DOWN + LEFT;
-	
+
+	public static List<Direction> HORIZONTAL = new List<Direction> ();
+	public static List<Direction> VERTICAL = new List<Direction> ();
+	public static List<Direction> CROSS = new List<Direction> ();
+	public static List<Direction> DIAGONAL = new List<Direction> ();
 	public static List<Direction> ALL = new List<Direction>();
 	
 	static Direction(){
-		ALL.Add (TOP);
-		ALL.Add (TOP_RIGHT);
-		ALL.Add (RIGHT);
-		ALL.Add (DOWN_RIGHT);
-		ALL.Add (DOWN);
-		ALL.Add (DOWN_LEFT);
-		ALL.Add (LEFT);
-		ALL.Add (TOP_LEFT);
+		HORIZONTAL.Add (RIGHT);
+		HORIZONTAL.Add (LEFT);
+
+		VERTICAL.Add (TOP);
+		VERTICAL.Add (DOWN);
+
+		CROSS.AddRange (HORIZONTAL);
+		CROSS.AddRange (VERTICAL);
+
+		DIAGONAL.Add (TOP_RIGHT);
+		DIAGONAL.Add (DOWN_RIGHT);
+		DIAGONAL.Add (DOWN_LEFT);
+		DIAGONAL.Add (TOP_LEFT);
+
+		ALL.AddRange (CROSS);
+		ALL.AddRange (DIAGONAL);
 	}
 
 	public float angle = 0.0f;
@@ -58,10 +70,14 @@ public class Direction : Coordinate {
 		return new Direction (c1.x * multiplier, c1.y * multiplier);
 	}
 
-	public Direction mirror(bool flipped){
+	public Direction Mirror(bool flipped){
 		int flip = flipped ? 1 : -1;
 		int newY = flip * this.x;
 		int newX = flip * this.y;
 		return ALL.Find(d => d.x == newX && d.y == newY);
+	}
+
+	public Direction Reverse(){
+		return ALL.Find(d => d.x == -this.x && d.y == -this.y);
 	}
 }

@@ -18,7 +18,8 @@ public class Constants {
 
 	public static int GRID_SQUARE_RANGE = 3;
 
-	public static int LAZER_MAX_RANGE = 20;
+	public static int LAZER_MIN_RANGE = 40;
+
 	public static float LAZER_SPEED = 80f;
 	public static float LAZER_PREVIEW_ALPHA = 0.25f;
 

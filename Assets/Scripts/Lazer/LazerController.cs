@@ -80,11 +80,11 @@ public class LazerController : MonoBehaviour {
 	bool ObjectExists (Coordinate pos, Direction dir)
 	{
 		List<Coordinate> coordinates = new List<Coordinate>(turret.grid.objects.Keys);
-		Coordinate trans = turret.TranslateCoordinate (pos);
+		//Coordinate trans = turret.TranslateCoordinate (pos);
 		if (dir.y != 0)
-			return coordinates.Exists (c => trans.x == c.x && dir.y * c.y > dir.y * trans.y);
+			return coordinates.Exists (c => pos.x == c.x && dir.y * c.y > dir.y * pos.y);
 		else if (dir.x != 0)
-			return coordinates.Exists (c => trans.y == c.y && dir.x * c.x > dir.x * trans.x);
+			return coordinates.Exists (c => pos.y == c.y && dir.x * c.x > dir.x * pos.x);
 		
 		return false;
 	}
@@ -106,11 +106,12 @@ public class LazerController : MonoBehaviour {
 		var facing = this.turret.GetFacing();
 		var position = this.turret.position;
 
-		while (range < Grid.LAZER_MAX_RANGE) {
+		while (range < Grid.LAZER_MAX_RANGE || ObjectExists (position, facing)) {
 			position += facing;
 
 			Positional hit;
-			while (range < Grid.LAZER_MAX_RANGE && (hit = FindHit(position)) == null) {
+			while((hit = FindHit(position)) == null 
+			      && (range < Grid.LAZER_MAX_RANGE || ObjectExists (position, facing))){
 				if(!previewPiece.tag.Equals("SafeZone") && position.Equals(previewPiece.position)){
 					DrawPreview (position, facing);
 					return;
@@ -151,12 +152,13 @@ public class LazerController : MonoBehaviour {
 		var range = 0;
 		var rayStart = pos;
 
-		while (range < Grid.LAZER_MAX_RANGE) {
+		while (range < Grid.LAZER_MAX_RANGE || ObjectExists (position, facing)) {
 			position += facing;
 			var start = position;
 
 			Positional hit;
-			while(range < Grid.LAZER_MAX_RANGE && (hit = FindHit(position)) == null){
+			while((hit = FindHit(position)) == null 
+			      && (range < Grid.LAZER_MAX_RANGE || ObjectExists (position, facing))){
 				range++;
 				position += facing;
 			}

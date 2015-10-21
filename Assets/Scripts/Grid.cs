@@ -19,7 +19,7 @@ public class Grid : MonoBehaviour {
 	private int maxY = 0;
 	private int minY = 0;
 
-	public static int LAZER_MAX_RANGE = Constants.LAZER_MAX_RANGE;
+	public static int LAZER_MAX_RANGE = Constants.LAZER_MIN_RANGE;
 
 	public Dictionary<Coordinate, Positional> objects = new Dictionary<Coordinate, Positional> ();
 	private Dictionary<Coordinate, GridSquare> squares = new Dictionary<Coordinate, GridSquare> ();
@@ -177,11 +177,7 @@ public class Grid : MonoBehaviour {
 		maxY = Mathf.Max (position.y, maxY);
 		minY = Mathf.Min (position.y, minY);
 
-		LAZER_MAX_RANGE = GetMaxValue (maxX, -minX, maxY, -minY, LAZER_MAX_RANGE);
-	}
-
-	int GetMaxValue(params int[] values){
-		return values.Max ();
+		LAZER_MAX_RANGE = Mathf.Max (maxX - minX, maxY - minY) + Constants.LAZER_MIN_RANGE;
 	}
 
 	Vector2 GetPosition (Coordinate pos)

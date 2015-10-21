@@ -50,21 +50,21 @@ public class GridSquare : Positional {
 	{
 		if (!piecePreview) {
 			this.piecePreview = true;
-			grid.selectedPiece.gameObject.SetActive (true);
-			grid.selectedPiece.transform.position = this.transform.position;
-			grid.selectedPiece.position = this.position;
+			grid.previewPiece.gameObject.SetActive (true);
+			grid.previewPiece.transform.position = this.transform.position;
+			grid.previewPiece.position = this.position;
 		}
 
-		if (!lazerPreview && !grid.Firing ()) {
+		if (!lazerPreview) {
 			this.lazerPreview = true;
-			grid.PreviewLazers (grid.selectedPiece);
+			grid.PreviewLazers ();
 		}
 	}
 
 	void HidePreview ()
 	{
 		if (piecePreview) {
-			grid.selectedPiece.gameObject.SetActive (false);
+			grid.previewPiece.gameObject.SetActive (false);
 			this.piecePreview = false;
 		}
 
@@ -78,7 +78,7 @@ public class GridSquare : Positional {
 	{
 		if (Input.GetMouseButtonDown (0)) {
 			SetDisabled(true);
-			grid.PutMirror (position, grid.selectedPiece.IsFlipped());
+			grid.PutMirror (position, grid.previewPiece.IsFlipped());
 
 		} else if (Input.GetMouseButtonDown (1)) {
 			SetDisabled(true);

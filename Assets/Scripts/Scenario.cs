@@ -9,15 +9,25 @@ public class Scenario
 	public int playerCount = 0;
 
 	public Scenario(){
-		pieces.Add (Direction.LEFT.toCoordinate(), new Turret(Direction.LEFT, ++playerCount));
-		pieces.Add (Direction.RIGHT.toCoordinate(), new Turret(Direction.RIGHT, ++playerCount));
+		Coordinate turret1 = Direction.LEFT.toCoordinate () * 2;
+		Coordinate turret2 = Direction.RIGHT.toCoordinate () * 2;
+		pieces.Add (turret1, new Turret(Direction.LEFT, ++playerCount));
+		pieces.Add (turret2, new Turret(Direction.RIGHT, ++playerCount));
 
-		Surround (Direction.LEFT);
-		Surround (Direction.RIGHT);
+		Cross (turret1);
+		Cross (turret2);
 	}
 
 	private void Surround(Coordinate pos){
 		foreach (Direction c in Direction.ALL) {
+			var target = pos + c;
+			if(!pieces.ContainsKey(target))
+				pieces.Add (target, SafeZone.INSTANCE);
+		}
+	}
+
+	private void Cross(Coordinate pos){
+		foreach (Direction c in Direction.CROSS) {
 			var target = pos + c;
 			if(!pieces.ContainsKey(target))
 				pieces.Add (target, SafeZone.INSTANCE);

@@ -1,10 +1,16 @@
 ﻿<Properties>
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="MonoDevelop.Default" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\LazerController.cs">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\Grid.cs">
     <Files>
-      <File FileName="Assets\Scripts\UIController.cs" Line="15" Column="1" />
+      <File FileName="Assets\Scripts\GridSquare.cs" Line="60" Column="24" />
+      <File FileName="Assets\Scripts\Mirror.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\Turret.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\Lazer\LazerController.cs" Line="243" Column="24" />
       <File FileName="Assets\Scripts\Grid.cs" Line="1" Column="1" />
-      <File FileName="Assets\Scripts\LazerController.cs" Line="85" Column="3" />
+      <File FileName="Assets\Scripts\Lazer\Lazer.cs" Line="23" Column="36" />
+      <File FileName="Assets\Scripts\Lazer\LazerHit.cs" Line="72" Column="35" />
+      <File FileName="Assets\Scripts\Lazer\LazerImpact.cs" Line="26" Column="37" />
+      <File FileName="Assets\Scripts\Direction.cs" Line="36" Column="28" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

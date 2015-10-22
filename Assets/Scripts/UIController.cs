@@ -16,7 +16,7 @@ public class UIController : MonoBehaviour {
 
 	public float labelOffset = 0.0f;
 
-	private Dictionary<Text, Vector3> playerLabelPositions = new Dictionary<Text, Vector3>();
+	private Dictionary<Text, Transform> playerLabelPositions = new Dictionary<Text, Transform>();
 
 	void Awake () {
 		INSTANCE = this;
@@ -27,10 +27,6 @@ public class UIController : MonoBehaviour {
 
 		turnTextAnim = turnText.GetComponent<Animator> ();
 		welcomeTextAnim = this.transform.FindChild ("welcome_text").GetComponent<Animator>();
-
-	}
-
-	public void asdasd(){
 
 	}
 
@@ -47,16 +43,16 @@ public class UIController : MonoBehaviour {
 	// Update is called once per frame
 	void Update () {
 		foreach (Text label in playerLabelPositions.Keys) {
-			var pos = Camera.main.WorldToScreenPoint(playerLabelPositions[label]);
+			var pos = Camera.main.WorldToScreenPoint(playerLabelPositions[label].position);
 			pos.y += Constants.PLAYER_LABEL_OFFSET;
 			label.transform.position = pos;
 		}
 	}
 
-	public static void AddPlayerLabel(string playerName, Vector3 position){
+	public static void AddPlayerLabel(string playerName, Transform transform){
 		var label = Instantiate<Text> (INSTANCE.playerLabelPrefab);
 		label.text = playerName;
 		label.transform.SetParent(INSTANCE.transform, true);
-		INSTANCE.playerLabelPositions.Add (label, position);
+		INSTANCE.playerLabelPositions.Add (label, transform);
 	}
 }

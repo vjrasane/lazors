@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using System;
 using UnityEngine.UI;
 
 public class Grid : MonoBehaviour {
@@ -12,8 +13,7 @@ public class Grid : MonoBehaviour {
 	public GameObject turretPrefab;
 	public GameObject mirrorPrefab;
 
-
-
+	public GameObject dropperPrefab;
 
 	public Color previewColor;
 
@@ -44,6 +44,9 @@ public class Grid : MonoBehaviour {
 	public GameObject arrows;
 	public GameObject blockedPrefab;
 	public GameObject blocked;
+	
+	private List<Dropper> dropperQueue = new List<Dropper>();
+	private List<Dropper> dropperWait = new List<Dropper>();
 
 	void Awake(){
 		center = new Coordinate((int)(Constants.GRID_MAX_SIZE / 2), (int)(Constants.GRID_MAX_SIZE / 2));
@@ -71,26 +74,70 @@ public class Grid : MonoBehaviour {
 
 		DrawSquares ();
 
-		inTurn = players.First ();
-
-		UIController.DisplayWelcomeText ();
-		UIController.DisplayTurnText (inTurn.name);
-
 		FireTurrets ();
+
+		Func<bool> afterDrops = () => {
+			if (dropperQueue.Count > 0 || dropperWait.Exists(d => !d.IsDone()))
+				return false;
+
+			inTurn = players.First ();
+
+			turrets.ForEach(t => {
+				if(t.player != null)
+					UIController.AddPlayerLabel(t.player.name, t.transform);
+			}); 
+
+			UIController.DisplayWelcomeText ();
+			UIController.DisplayTurnText (inTurn.name);
+
+			return true;
+		};
+
+		onUpdate.Add (afterDrops);
+
 	}
 
 	public void FireTurrets(){
 		turrets.ForEach (t => t.Fire ());
 	}
 
+
+	private float dropElapsed = 0;
+	private List<Func<bool>> onUpdate = new List<Func<bool>>();
+
 	void Update(){
+		HandleDroppers ();
+
 		if (Input.GetKeyDown (KeyCode.Tab) && previewPiece.gameObject.activeSelf) {
 			previewPiece.Flip();
 			ClearPreviews();
 			PreviewLazers();
 		}
 
+		if (onUpdate.Count > 0) {
+			List<Boolean> done = onUpdate.ConvertAll(a => a());
+			for(var i = 0; i < done.Count; i++)
+				if(done[i])
+					onUpdate.RemoveAt(i);
+		}
+
 		CheckTurn ();
+	}
+
+	void HandleDroppers ()
+	{
+		if (dropperQueue.Count > 0 && dropElapsed >= Constants.DROP_INTERVAL) {
+			Drop ();
+			dropElapsed = 0;
+		}
+
+		if (dropperWait.Count > 0) {
+			var done = dropperWait.FindAll(d => d.IsDone());
+			dropperWait.RemoveAll(d => done.Contains(d));
+			done.ForEach(d => Destroy (d.gameObject));
+		}
+
+		dropElapsed = Mathf.Min (dropElapsed + Time.deltaTime, Constants.DROP_INTERVAL);
 	}
 
 	public void ChangeTurn(){
@@ -140,23 +187,22 @@ public class Grid : MonoBehaviour {
 	{
 		ClearPreviews ();
 		var mirror = Put (pos, mirrorPrefab);
-		if (flipped)
-			mirror.GetComponent<Mirror> ().Flip ();
+		mirror.GetComponent<Mirror> ().SetFlipped (flipped);
 
 		ChangeTurn ();
-		FireTurrets();
 
 		return mirror;
 	}
 
 	private Piece Put(Coordinate pos, GameObject prefab){
-		var obj = InstantiateAt<Piece> (pos, prefab, true);
-
-		objects.Add (pos, obj);
+		var dropper = PrepareDrop(pos, prefab);
 
 		DrawSquares ();
+		dropper.onDone = FireTurrets;
 
-		return obj;
+		objects.Add (pos, dropper.obj);
+
+		return dropper.obj;
 	}
 
 	public void PreviewAt(Positional pos){
@@ -214,6 +260,33 @@ public class Grid : MonoBehaviour {
 		return Vector2.zero + pos.asVec2() * SQUARE_SIZE;
 	}
 
+	private Dropper PrepareDrop(Coordinate position, GameObject prefab) {
+		var obj = Instantiate (prefab);
+
+		Piece positional = obj.GetComponent<Piece>();
+		positional.position = position;
+		positional.grid = this;
+
+		var dropper = Instantiate(this.dropperPrefab).GetComponent<Dropper>();
+		dropper.Insert (positional, this);
+		dropper.transform.position = GetPosition (position);
+
+		dropperQueue.Add (dropper);
+
+		CheckBounds (position);
+
+		return dropper;
+	}
+
+	void Drop ()
+	{
+		int index = (int)UnityEngine.Random.Range (0, dropperQueue.Count);
+		var dropper = dropperQueue [index];
+		dropper.Drop ();
+		dropperQueue.RemoveAt (index);
+		dropperWait.Add (dropper);
+	}
+
 	void CreateScenario ()
 	{
 		if (scenario == null) {
@@ -228,23 +301,22 @@ public class Grid : MonoBehaviour {
 
 			if(piece.GetType() == typeof(Scenario.SafeZone)){
 				// No need to translate here
-				objects.Add (coord, InstantiateAt<Piece>(coord, safeZonePrefab, true));
+				objects.Add (coord, PrepareDrop(coord, safeZonePrefab).obj);
 			} else if(piece.GetType() == typeof(Scenario.Turret)){
 				Scenario.Turret turretPiece = ((Scenario.Turret)piece);
 				var facing = turretPiece.facing;
-				var turret = InstantiateAt<Piece>(coord, turretPrefab, true);
+				var obj = PrepareDrop(coord, turretPrefab).obj;
 
-				var turretScript = turret.GetComponent<Turret>();
+				var turretScript = obj.GetComponent<Turret>();
 				turretScript.RotateGun(facing);
 
 				if(turretPiece.playerNum > 0) {
 					var player = players[turretPiece.playerNum - 1];
-					UIController.AddPlayerLabel(player.name, turret.transform.position);
 					turretScript.player = player;
 				}
-				
+
 				turrets.Add(turretScript);
-				objects.Add (coord, turret);
+				objects.Add (coord, obj);
 			}
 		}
 	}

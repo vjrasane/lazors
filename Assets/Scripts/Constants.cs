@@ -33,6 +33,8 @@ public class Constants {
 
 	public static float ARROW_ROTATE_SPEED = 10f;
 
+	public static float DROP_INTERVAL = 0.05f;
+
 	static Constants(){
 		COLOR_TRANSPARENT.a = 0;
 	}

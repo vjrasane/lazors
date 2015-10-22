@@ -10,13 +10,23 @@ public class Mirror : Piece {
 	}
 
 	public void Flip(){
-		this.flipped = !flipped;
-		this.transform.Rotate (new Vector3 (0, 180, 0));
+		DoFlip ();
 		
 		if (this.position != null && !this.preview) {
 			grid.FireTurrets ();
 			grid.ChangeTurn();
 		}
+	}
+
+	public void SetFlipped(bool flipped){
+		if (this.flipped != flipped)
+			DoFlip ();
+	}
+
+	void DoFlip ()
+	{
+		this.flipped = !flipped;
+		this.transform.Rotate (new Vector3 (0, 180, 0));
 	}
 
 	public bool IsFlipped(){

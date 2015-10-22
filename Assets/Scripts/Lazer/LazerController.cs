@@ -43,8 +43,10 @@ public class LazerController : MonoBehaviour {
 	}
 
 	private void ClearLazer(List<LazerDirect> container){
-		container.ForEach (l => MoveToPool(l));
-		container.Clear ();
+		if (container.Count > 0) {
+			container.ForEach (l => MoveToPool (l));
+			container.Clear ();
+		}
 	}
 
 	private void MoveToPool(LazerDirect lazer){
@@ -97,11 +99,11 @@ public class LazerController : MonoBehaviour {
 
 	public void Fire(){
 		if(this.turret.IsActive())
-			DrawLazer (this.turret.position, this.turret.GetFacing(), 1, OnHit, sections);
+			DrawLazer (this.turret.position, this.turret.GetFacing(), 1, OnHit, FindRealHit, sections);
 	}
 
 	public void Preview(){
-		var previewPiece = turret.grid.previewPiece;
+
 		var range = 0;
 		var facing = this.turret.GetFacing();
 		var position = this.turret.position;
@@ -109,15 +111,17 @@ public class LazerController : MonoBehaviour {
 		while (range < Grid.LAZER_MAX_RANGE || ObjectExists (position, facing)) {
 			position += facing;
 
-			Positional hit;
-			while((hit = FindHit(position)) == null 
+			Positional hit, preview;
+			while((preview = FindGhostHit(position)) == null 
+			      && (hit = FindRealHit(position)) == null 
 			      && (range < Grid.LAZER_MAX_RANGE || ObjectExists (position, facing))){
-				if(!previewPiece.tag.Equals("SafeZone") && position.Equals(previewPiece.position)){
-					DrawPreview (position, facing);
-					return;
-				}
 				range++;
 				position += facing;
+			}
+
+			if(preview != null) {
+				DrawPreview (position, facing);
+				return;
 			}
 
 			if (hit != null) {
@@ -135,13 +139,29 @@ public class LazerController : MonoBehaviour {
 		}
 	}
 
+	Piece FindGhostHit (Coordinate position)
+	{
+		var previewPiece = turret.grid.previewPiece;
+		if(!previewPiece.tag.Equals("SafeZone") && position.Equals(previewPiece.position)){
+			return previewPiece;
+		}
+		return null;
+	}
+
 	private void DrawPreview (Coordinate position, Direction facing)
 	{
 		var previewPiece = turret.grid.previewPiece;
-		DrawLazer (position, facing.Mirror (previewPiece.GetComponent<Mirror> ().IsFlipped ()), Constants.LAZER_PREVIEW_ALPHA, p =>  {}, previewSections);
+		Func<Coordinate, Piece> hitReg = p => 
+		{ 
+			Piece hit = null;
+			if ((hit = FindGhostHit (p)) == null)
+				hit = FindRealHit (p);
+			return hit;
+		};
+		DrawLazer (position, facing.Mirror (previewPiece.GetComponent<Mirror> ().IsFlipped ()), Constants.LAZER_PREVIEW_ALPHA, p =>  {}, hitReg,previewSections);
 	}
 
-	private void DrawLazer (Coordinate pos, Direction dir, float alpha, Action<Positional> onHit, List<LazerDirect> container)
+	private void DrawLazer (Coordinate pos, Direction dir, float alpha, Action<Positional> onHit, Func<Coordinate, Piece> hitReg, List<LazerDirect> container)
 	{
 		var facing = dir;
 		var position = pos;
@@ -157,7 +177,7 @@ public class LazerController : MonoBehaviour {
 			var start = position;
 
 			Positional hit;
-			while((hit = FindHit(position)) == null 
+			while((hit = hitReg(position)) == null 
 			      && (range < Grid.LAZER_MAX_RANGE || ObjectExists (position, facing))){
 				range++;
 				position += facing;
@@ -193,9 +213,9 @@ public class LazerController : MonoBehaviour {
 		}
 	}
 
-	Positional FindHit (Coordinate position)
+	Piece FindRealHit (Coordinate position)
 	{
-		Positional hit;
+		Piece hit;
 		if (turret.grid.objects.ContainsKey (position) && !(hit = turret.grid.objects [position]).tag.Equals ("SafeZone"))
 			return hit;
 		return  null;

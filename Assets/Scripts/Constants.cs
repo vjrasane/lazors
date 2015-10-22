@@ -31,6 +31,8 @@ public class Constants {
 
 	public static float PLAYER_LABEL_OFFSET = 15f;
 
+	public static float ARROW_ROTATE_SPEED = 10f;
+
 	static Constants(){
 		COLOR_TRANSPARENT.a = 0;
 	}

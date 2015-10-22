@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public class Turret : Positional {
+public class Turret : Piece {
 
 	public Player player;
 
@@ -111,11 +111,6 @@ public class Turret : Positional {
 		}
 	}
 
-	public bool IsFiring ()
-	{
-		return this.lazer.firing;
-	}
-	
 	public Coordinate TranslateCoordinate(Coordinate pos){
 		return pos + this.position;
 	}
@@ -132,6 +127,21 @@ public class Turret : Positional {
 			return;
 
 		this.exploding = true;
+	}
+
+	public override void OnClick ()
+	{
+		
+	}
+
+	public override void OnHover ()
+	{
+		
+	}
+
+	public override void OnExit ()
+	{
+		
 	}
 
 }

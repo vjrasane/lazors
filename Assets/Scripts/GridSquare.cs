@@ -8,7 +8,7 @@ public class GridSquare : Positional {
 	private SpriteRenderer renderer;
 	private BoxCollider2D collider;
 
-	public bool full = false;
+	public Piece piece = null;
 
 	public Color activeColor;
 	public Color inactiveColor;
@@ -50,9 +50,11 @@ public class GridSquare : Positional {
 	{
 		if (!piecePreview) {
 			this.piecePreview = true;
-			grid.previewPiece.gameObject.SetActive (true);
-			grid.previewPiece.transform.position = this.transform.position;
-			grid.previewPiece.position = this.position;
+			if(this.piece != null)
+				this.piece.OnHover();
+			else {
+				grid.PreviewAt(this);
+			}
 		}
 
 		if (!lazerPreview) {
@@ -64,7 +66,10 @@ public class GridSquare : Positional {
 	void HidePreview ()
 	{
 		if (piecePreview) {
-			grid.previewPiece.gameObject.SetActive (false);
+			if(this.piece != null)
+				this.piece.OnExit();
+			else
+				grid.HidePreview();
 			this.piecePreview = false;
 		}
 
@@ -77,16 +82,14 @@ public class GridSquare : Positional {
 	void HandleClick ()
 	{
 		if (Input.GetMouseButtonDown (0)) {
-			SetDisabled(true);
-			grid.PutMirror (position, grid.previewPiece.IsFlipped());
-
+			if(this.piece != null){
+				this.piece.OnClick();
+			} else {
+				this.piece = grid.PutMirror (position, grid.previewPiece.IsFlipped());
+			}
 		} else if (Input.GetMouseButtonDown (1)) {
-			SetDisabled(true);
-			grid.PutSafeZone (position);
+			this.piece = grid.PutSafeZone (position);
 		}
 	}
 
-	public void SetDisabled(bool disabled){
-		this.collider.enabled = !disabled;
-	}
 }

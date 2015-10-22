@@ -12,6 +12,9 @@ public class Grid : MonoBehaviour {
 	public GameObject turretPrefab;
 	public GameObject mirrorPrefab;
 
+
+
+
 	public Color previewColor;
 
 	private int maxX = 0;
@@ -21,7 +24,7 @@ public class Grid : MonoBehaviour {
 
 	public static int LAZER_MAX_RANGE = Constants.LAZER_MIN_RANGE;
 
-	public Dictionary<Coordinate, Positional> objects = new Dictionary<Coordinate, Positional> ();
+	public Dictionary<Coordinate, Piece> objects = new Dictionary<Coordinate, Piece> ();
 	private Dictionary<Coordinate, GridSquare> squares = new Dictionary<Coordinate, GridSquare> ();
 
 	private List<Player> players = new List<Player> ();
@@ -36,19 +39,30 @@ public class Grid : MonoBehaviour {
 
 	public Mirror previewPiece;
 
+	// INDICATORS
+	public GameObject arrowsPrefab;
+	public GameObject arrows;
+	public GameObject blockedPrefab;
+	public GameObject blocked;
+
 	void Awake(){
 		center = new Coordinate((int)(Constants.GRID_MAX_SIZE / 2), (int)(Constants.GRID_MAX_SIZE / 2));
-		var squareBlock = InstantiateAt(TranslateCoordinate(center), safeZonePrefab);
+		var squareBlock = InstantiateAt<Positional>(TranslateCoordinate(center), squarePrefab);
 
 		previewPiece = Instantiate (mirrorPrefab).GetComponent<Mirror>();
 		previewPiece.GetComponent<SpriteRenderer> ().color = previewColor;
-		previewPiece.GetComponent<BoxCollider2D> ().enabled = false;
 		previewPiece.preview = true;
 		previewPiece.gameObject.SetActive (false);
+		previewPiece.grid = this;
 
 		SQUARE_SIZE = squareBlock.GetComponent<BoxCollider2D> ().bounds.size.x;
 
 		Destroy (squareBlock.gameObject);
+
+		arrows = Instantiate (arrowsPrefab);
+		arrows.SetActive (false);
+		blocked = Instantiate (blockedPrefab);
+		blocked.SetActive (false);
 	}
 
 	// Use this for initialization
@@ -104,13 +118,13 @@ public class Grid : MonoBehaviour {
 
 				var coordinate = new Coordinate (x, y);
 				if(!squares.ContainsKey(coordinate)){
-					var squareObj = InstantiateAt(coordinate, squarePrefab);
+					var squareObj = InstantiateAt<Positional>(coordinate, squarePrefab);
 
 					var gridSquare = squareObj.GetComponent<GridSquare>();
 
 					gridSquare.grid = this;
 					gridSquare.position = coordinate;
-					gridSquare.SetDisabled(objects.ContainsKey(coordinate));
+					gridSquare.piece = objects.ContainsKey(coordinate) ? objects[coordinate] : null;
 
 					squares.Add(coordinate, gridSquare);
 				}
@@ -118,11 +132,11 @@ public class Grid : MonoBehaviour {
 		}
 	}
 
-	public void PutSafeZone(Coordinate pos){
-		Put (pos, safeZonePrefab);
+	public Piece PutSafeZone(Coordinate pos){
+		return Put (pos, safeZonePrefab);
 	}
 
-	public void PutMirror (Coordinate pos, bool flipped)
+	public Piece PutMirror (Coordinate pos, bool flipped)
 	{
 		ClearPreviews ();
 		var mirror = Put (pos, mirrorPrefab);
@@ -131,16 +145,29 @@ public class Grid : MonoBehaviour {
 
 		ChangeTurn ();
 		FireTurrets();
+
+		return mirror;
 	}
 
-	private Positional Put(Coordinate pos, GameObject prefab){
-		var obj = InstantiateAt (pos, prefab, true);
+	private Piece Put(Coordinate pos, GameObject prefab){
+		var obj = InstantiateAt<Piece> (pos, prefab, true);
 
 		objects.Add (pos, obj);
 
 		DrawSquares ();
 
 		return obj;
+	}
+
+	public void PreviewAt(Positional pos){
+		previewPiece.transform.position = pos.transform.position;
+		previewPiece.position = pos.position;
+		previewPiece.gameObject.SetActive (true);
+	}
+
+	public void HidePreview(){
+		previewPiece.position = null;
+		previewPiece.gameObject.SetActive (false);
 	}
 
 	public void PreviewLazers(){
@@ -151,16 +178,16 @@ public class Grid : MonoBehaviour {
 		turrets.ForEach(t => t.ClearPreview());
 	}
 
-	private Positional InstantiateAt(Coordinate position, GameObject prefab) {
-		return InstantiateAt (position, prefab, false);
+	private P InstantiateAt<P>(Coordinate position, GameObject prefab) where P : Positional{
+		return InstantiateAt<P> (position, prefab, false);
 	}
 
-	private Positional InstantiateAt(Coordinate position, GameObject prefab, bool checkBounds){
+	private P InstantiateAt<P>(Coordinate position, GameObject prefab, bool checkBounds) where P : Positional{
 		var obj = Instantiate (prefab);
 		obj.transform.parent = this.transform;
 		obj.transform.localPosition = GetPosition (position);
 
-		Positional positional = obj.GetComponent<Positional>();
+		P positional = obj.GetComponent<P>();
 		positional.position = position;
 		positional.grid = this;
 
@@ -201,11 +228,11 @@ public class Grid : MonoBehaviour {
 
 			if(piece.GetType() == typeof(Scenario.SafeZone)){
 				// No need to translate here
-				objects.Add (coord, InstantiateAt(coord, safeZonePrefab, true));
+				objects.Add (coord, InstantiateAt<Piece>(coord, safeZonePrefab, true));
 			} else if(piece.GetType() == typeof(Scenario.Turret)){
 				Scenario.Turret turretPiece = ((Scenario.Turret)piece);
 				var facing = turretPiece.facing;
-				var turret = InstantiateAt(coord, turretPrefab, true);
+				var turret = InstantiateAt<Piece>(coord, turretPrefab, true);
 
 				var turretScript = turret.GetComponent<Turret>();
 				turretScript.RotateGun(facing);

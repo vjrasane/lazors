@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class SafeZone : Piece {
+public class SafeZone : PieceObject {
 
 	// Use this for initialization
 	void Start () {
@@ -13,19 +13,12 @@ public class SafeZone : Piece {
 	
 	}
 
-	public override void OnClick ()
-	{
+	#region implemented abstract members of PieceObject
 
+	public override Piece.PieceType GetPieceType ()
+	{
+		return Piece.PieceType.SafeZone;
 	}
 
-	public override void OnHover ()
-	{
-		grid.blocked.transform.position = this.transform.position;
-		grid.blocked.SetActive (true);
-	}
-
-	public override void OnExit ()
-	{
-		grid.blocked.SetActive (false);
-	}
+	#endregion
 }

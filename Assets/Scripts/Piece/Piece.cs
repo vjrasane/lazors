@@ -1,11 +1,50 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public abstract class Piece : Positional {
+public abstract class Piece {
 
-	public abstract void OnClick();
+	public enum PieceType {
+		Mirror, Turret, SafeZone
+	}
 
-	public abstract void OnHover();
+	public abstract PieceType GetPieceType();
 
-	public abstract void OnExit();
-}
+	public class Turret : Piece {
+		public Direction facing;
+		public int playerNum = -1;
+		
+		public Turret(Direction facing) : this(facing, -1){
+			
+		}
+		
+		public Turret(Direction facing, int playerNum){
+			this.facing = facing;
+			this.playerNum = playerNum;
+		}
+		public override PieceType GetPieceType() {
+			return PieceType.Turret;
+		}
+	}
+	
+	public class SafeZone : Piece {
+		
+		public static SafeZone INSTANCE = new SafeZone();
+		
+		public override PieceType GetPieceType() {
+			return PieceType.SafeZone;
+		}
+	}
+	
+	public class Mirror : Piece {
+		public bool flipped;
+		
+		public Mirror(bool flipped){
+			this.flipped = flipped;
+		}
+		
+		public override PieceType GetPieceType() {
+			return PieceType.Mirror;
+		}
+	}
+};
+

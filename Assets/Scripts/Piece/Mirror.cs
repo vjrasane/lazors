@@ -1,21 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Mirror : Piece {
+public class Mirror : PieceObject {
 
 	private bool flipped = false;
-
-	public override void  OnClick(){
-		Flip ();
-	}
 
 	public void Flip(){
 		DoFlip ();
 		
 		if (this.position != null && !this.preview) {
-			grid.FireTurrets ();
-			grid.ChangeTurn();
-			grid.CheckTurn();
+			Singletons.GRID.FireTurrets ();
+			Singletons.GRID.ChangeTurn();
+			Singletons.GRID.CheckTurn();
 		}
 	}
 
@@ -34,25 +30,52 @@ public class Mirror : Piece {
 		return flipped;
 	}
 
-	private bool revertFlip;
+	private bool wasFlipped;
+	private Piece.PieceType rememberPiece;
 
-	public override void OnHover () {
-		revertFlip = this.grid.previewPiece.IsFlipped () == this.flipped;
-		if (revertFlip)
-			this.grid.previewPiece.Flip ();
-		this.grid.PreviewAt (this);
+	#region implemented abstract members of PieceObject
 
-		grid.arrows.transform.position = this.transform.position;
-		grid.arrows.SetActive (true);
-
-		grid.ClearPreviews ();
-		grid.PreviewLazers ();
+	public override Piece.PieceType GetPieceType ()
+	{
+		return Piece.PieceType.Mirror;
 	}
 
-	public override void OnExit () {
-		this.grid.HidePreview ();
-		if (revertFlip)
-			this.grid.previewPiece.Flip ();
-		grid.arrows.SetActive (false);
+	public override void  HandleClick(){
+		Flip ();
 	}
+	
+	public override void HandleHover () {
+		rememberPiece = Singletons.GRID.previewPiece.GetPieceType();
+
+		Singletons.GRID.SetPreviewPiece (Piece.PieceType.Mirror); 
+
+		var preview = Singletons.GRID.previewPiece.GetComponent<Mirror> ();
+		wasFlipped = preview.IsFlipped ();
+		if (wasFlipped == this.flipped)
+			preview.Flip ();
+		Singletons.GRID.PreviewAt (this);
+
+		Singletons.GRID.arrows.transform.position = this.transform.position;
+		Singletons.GRID.arrows.SetActive (true);
+
+		Singletons.GRID.ClearPreviews ();
+		Singletons.GRID.PreviewLazers ();
+	}
+
+	public override void HandleExit () {
+		Singletons.GRID.HidePreview ();
+
+		var preview = Singletons.GRID.previewPiece.GetComponent<Mirror> ();
+	
+		preview.SetFlipped (wasFlipped);
+
+		Singletons.GRID.arrows.SetActive (false);
+		Singletons.GRID.SetPreviewPiece (rememberPiece); 
+	}
+
+	public override void HandleRotate(){
+		DoFlip ();
+	}
+	
+	#endregion
 }

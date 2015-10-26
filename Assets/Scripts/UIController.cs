@@ -19,7 +19,7 @@ public class UIController : MonoBehaviour {
 	private Dictionary<Text, Transform> playerLabelPositions = new Dictionary<Text, Transform>();
 
 	void Awake () {
-		INSTANCE = this;
+		Singletons.UI = this;
 	}
 	// Use this for initialization
 	void Start () {
@@ -27,17 +27,15 @@ public class UIController : MonoBehaviour {
 
 		turnTextAnim = turnText.GetComponent<Animator> ();
 		welcomeTextAnim = this.transform.FindChild ("welcome_text").GetComponent<Animator>();
-
 	}
 
-	public static void DisplayWelcomeText(){
-		INSTANCE.welcomeTextAnim.SetTrigger ("Enter");
-
+	public void DisplayWelcomeText(){
+		welcomeTextAnim.SetTrigger ("Enter");
 	}
 
-	public static void DisplayTurnText(string playerName){
-		INSTANCE.turnTextAnim.SetTrigger ("Enter");
-		INSTANCE.turnText.playerName = playerName;
+	public void DisplayTurnText(string playerName){
+		turnTextAnim.SetTrigger ("Enter");
+		turnText.playerName = playerName;
 	}
 
 	// Update is called once per frame
@@ -49,10 +47,10 @@ public class UIController : MonoBehaviour {
 		}
 	}
 
-	public static void AddPlayerLabel(string playerName, Transform transform){
-		var label = Instantiate<Text> (INSTANCE.playerLabelPrefab);
+	public void AddPlayerLabel(string playerName, Transform transform){
+		var label = Instantiate<Text> (playerLabelPrefab);
 		label.text = playerName;
-		label.transform.SetParent(INSTANCE.transform, true);
-		INSTANCE.playerLabelPositions.Add (label, transform);
+		label.transform.SetParent(transform, true);
+		playerLabelPositions.Add (label, transform);
 	}
 }

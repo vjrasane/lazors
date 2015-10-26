@@ -1,14 +1,14 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.EventSystems;
 
-public class GridSquare : Positional {
+public class GridSquare : Positional, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler {
 
 	// Shitty Unity doesn't actually provide access to renderer/collider but complains about using them as a variable...
 	#pragma warning disable 0108
 	private SpriteRenderer renderer;
-	private BoxCollider2D collider;
 
-	public Piece piece = null;
+	public PieceObject piece = null;
 
 	public Color activeColor;
 	public Color inactiveColor;
@@ -20,7 +20,6 @@ public class GridSquare : Positional {
 	void Awake(){
 		this.renderer = this.GetComponent<SpriteRenderer> ();
 		this.renderer.color = inactiveColor;
-		this.collider = this.GetComponent<BoxCollider2D> ();
 	}
 
 	// Use this for initialization
@@ -32,26 +31,15 @@ public class GridSquare : Positional {
 
 	}
 
-	void OnMouseOver(){
-		this.renderer.color = activeColor;
-		ShowPreview ();
-		HandleClick ();
-	}
-
-	void OnMouseExit(){
-		this.renderer.color = inactiveColor;
-		HidePreview ();
-	}
 
 	void Update () {
-	
 	}
 
-	void ShowPreview ()
+	public void ShowPreview ()
 	{
 		if (!piecePreview && this.piece == null) {
 			this.piecePreview = true;
-			grid.PreviewAt(this);
+			Singletons.GRID.PreviewAt(this);
 		}
 
 		if(!hoverPreview && this.piece != null) {
@@ -61,14 +49,14 @@ public class GridSquare : Positional {
 
 		if (!lazerPreview) {
 			this.lazerPreview = true;
-			grid.PreviewLazers ();
+			Singletons.GRID.PreviewLazers ();
 		}
 	}
 
 	void HidePreview ()
 	{
 		if (piecePreview) {
-			grid.HidePreview();
+			Singletons.GRID.HidePreview();
 			this.piecePreview = false;
 		}
 
@@ -78,27 +66,69 @@ public class GridSquare : Positional {
 		}
 
 		if (lazerPreview) {
-			grid.ClearPreviews();
+			Singletons.GRID.ClearPreviews();
 			this.lazerPreview = false;
 		}
 	}
 
 	void HandleClick ()
 	{
-		if(this.grid.turnDone)
+		if(Singletons.GRID.turnDone)
 			return;
 
 		if (Input.GetMouseButtonDown (0)) {
 			if(this.piece != null){
 				this.piece.OnClick();
 			} else {
-				grid.PutMirror (this, grid.previewPiece.IsFlipped());
+				Singletons.GRID.PutPiece (this);
 			}
 		} else if (Input.GetMouseButtonDown (1)) {
 
 			// TODO Move to piece selection, is buggy
-			this.piece = grid.PutSafeZone (this);
+			this.piece = Singletons.GRID.PutSafeZone (this);
 		}
 	}
 
+	#region IPointerClickHandler implementation
+	public void OnPointerClick (PointerEventData eventData)
+	{
+		if(Singletons.GRID.turnDone)
+			return;
+		
+		if (eventData.button.Equals(PointerEventData.InputButton.Left)) {
+			if(this.piece != null){
+				this.piece.OnClick();
+			} else {
+				Singletons.GRID.PutPiece(this);
+			}
+		} else if (eventData.button.Equals(PointerEventData.InputButton.Right)) {
+			
+			// TODO Move to piece selection, is buggy
+			this.piece = Singletons.GRID.PutSafeZone (this);
+		}
+	}
+	#endregion
+
+	public bool hover = false;
+	#region IPointerEnterHandler implementation
+
+	public void OnPointerEnter (PointerEventData eventData)
+	{
+		this.hover = true;
+		this.renderer.color = activeColor;
+		ShowPreview ();
+	}
+
+	#endregion
+
+	#region IPointerExitHandler implementation
+
+	public void OnPointerExit (PointerEventData eventData)
+	{
+		this.hover = false;
+		this.renderer.color = inactiveColor;
+		HidePreview ();
+	}
+
+	#endregion
 }

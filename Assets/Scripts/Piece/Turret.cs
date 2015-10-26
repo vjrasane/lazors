@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public class Turret : Piece {
+public class Turret : PieceObject {
 
 	public Player player;
 
@@ -11,8 +11,7 @@ public class Turret : Piece {
 	
 	public GameObject explosionPrefab;
 	public GameObject smokePrefab;
-	
-	public Color playerColor;
+
 	public Color destroyedColor;
 
 	private SpriteRenderer baseRenderer;
@@ -38,8 +37,8 @@ public class Turret : Piece {
 		this.baseShadowRenderer = this.transform.FindChild("base_shadow").GetComponent<SpriteRenderer> ();
 		this.gunShadowRenderer = this.gun.transform.FindChild("gun_shadow").GetComponent<SpriteRenderer> ();
 
-		baseRenderer.color = playerColor;
-		gunRenderer.color = playerColor;
+		baseRenderer.color = normalColor;
+		gunRenderer.color = normalColor;
 
 	}
 
@@ -83,7 +82,7 @@ public class Turret : Piece {
 	{
 		if (exploding) {
 			if (explodeTime < Constants.EXPLOSION_CHARGEUP_DURATION) {
-				var color = Color.Lerp (playerColor, Color.white, explodeTime / Constants.EXPLOSION_CHARGEUP_DURATION);
+				var color = Color.Lerp (normalColor, Color.white, explodeTime / Constants.EXPLOSION_CHARGEUP_DURATION);
 				this.baseRenderer.color = color;
 				this.gunRenderer.color = color;
 				var c = Color.Lerp (Color.white, Constants.COLOR_TRANSPARENT, explodeTime / Constants.EXPLOSION_CHARGEUP_DURATION);
@@ -129,19 +128,13 @@ public class Turret : Piece {
 		this.exploding = true;
 	}
 
-	public override void OnClick ()
+	#region implemented abstract members of PieceObject
+
+	public override Piece.PieceType GetPieceType ()
 	{
-		
+		return Piece.PieceType.Turret;
 	}
 
-	public override void OnHover ()
-	{
-		
-	}
-
-	public override void OnExit ()
-	{
-		
-	}
+	#endregion
 
 }

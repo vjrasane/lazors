@@ -11,7 +11,7 @@ public class Dropper : MonoBehaviour {
 	private bool done = false;
 
 	private Grid grid;
-	public Piece obj;
+	public PieceObject obj;
 
 	private Transform drop;
 	private Animator animator;
@@ -22,7 +22,7 @@ public class Dropper : MonoBehaviour {
 		this.animator = this.GetComponent<Animator> ();
 	}
 
-	public void Insert(Piece obj, Grid grid){
+	public void Insert(PieceObject obj, Grid grid){
 		this.grid = grid;
 		this.obj = obj;
 		obj.gameObject.SetActive (false);

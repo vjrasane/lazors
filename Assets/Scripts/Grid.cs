@@ -24,8 +24,8 @@ public class Grid : MonoBehaviour {
 
 	public static int LAZER_MAX_RANGE = Constants.LAZER_MIN_RANGE;
 
-	public Dictionary<Coordinate, Piece> objects = new Dictionary<Coordinate, Piece> ();
-	private Dictionary<Coordinate, GridSquare> squares = new Dictionary<Coordinate, GridSquare> ();
+	public Dictionary<Coordinate, PieceObject> objects = new Dictionary<Coordinate, PieceObject> ();
+	public Dictionary<Coordinate, GridSquare> squares = new Dictionary<Coordinate, GridSquare> ();
 
 	private List<Player> players = new List<Player> ();
 
@@ -37,7 +37,9 @@ public class Grid : MonoBehaviour {
 	public static float SQUARE_SIZE = 0.0f;
 	private Coordinate center;
 
-	public Mirror previewPiece;
+	public PieceObject previewPiece;
+
+	private Dictionary<Piece.PieceType, PieceObject> previewPieces = new Dictionary<Piece.PieceType, PieceObject> ();
 
 	// INDICATORS
 	public GameObject arrowsPrefab;
@@ -49,6 +51,10 @@ public class Grid : MonoBehaviour {
 	private List<Dropper> dropperWait = new List<Dropper>();
 
 	void Awake(){
+		Singletons.GRID = this;
+
+		InitPreviewPieces ();
+
 		center = new Coordinate((int)(Constants.GRID_MAX_SIZE / 2), (int)(Constants.GRID_MAX_SIZE / 2));
 		var squareBlock = InstantiateAt<Positional>(TranslateCoordinate(center), squarePrefab);
 
@@ -56,7 +62,6 @@ public class Grid : MonoBehaviour {
 		previewPiece.GetComponent<SpriteRenderer> ().color = previewColor;
 		previewPiece.preview = true;
 		previewPiece.gameObject.SetActive (false);
-		previewPiece.grid = this;
 
 		SQUARE_SIZE = squareBlock.GetComponent<BoxCollider2D> ().bounds.size.x;
 
@@ -84,11 +89,11 @@ public class Grid : MonoBehaviour {
 
 			turrets.ForEach(t => {
 				if(t.player != null)
-					UIController.AddPlayerLabel(t.player.name, t.transform);
+					Singletons.UI.AddPlayerLabel(t.player.name, t.transform);
 			}); 
 
-			UIController.DisplayWelcomeText ();
-			UIController.DisplayTurnText (inTurn.name);
+			Singletons.UI.DisplayWelcomeText ();
+			Singletons.UI.DisplayTurnText (inTurn.name);
 
 			return true;
 		};
@@ -108,8 +113,8 @@ public class Grid : MonoBehaviour {
 	void Update(){
 		HandleDroppers ();
 
-		if (Input.GetKeyDown (KeyCode.Tab) && previewPiece.gameObject.activeSelf) {
-			previewPiece.Flip();
+		if (Input.GetKeyDown (KeyCode.Tab) && previewPiece.gameObject.activeSelf && this.squares[previewPiece.position].piece == null) {
+			previewPiece.Rotate();
 			ClearPreviews();
 			PreviewLazers();
 		}
@@ -150,7 +155,7 @@ public class Grid : MonoBehaviour {
 			var current = this.players.IndexOf(inTurn);
 			inTurn = this.players[++current % this.players.Count];
 			turnDone = false;
-			UIController.DisplayTurnText (inTurn.name);
+			Singletons.UI.DisplayTurnText (inTurn.name);
 		}
 	}
 
@@ -169,7 +174,6 @@ public class Grid : MonoBehaviour {
 
 					var gridSquare = squareObj.GetComponent<GridSquare>();
 
-					gridSquare.grid = this;
 					gridSquare.position = coordinate;
 					gridSquare.piece = objects.ContainsKey(coordinate) ? objects[coordinate] : null;
 
@@ -179,11 +183,26 @@ public class Grid : MonoBehaviour {
 		}
 	}
 
-	public Piece PutSafeZone(GridSquare square){
+	private void InitPreviewPieces(){
+		previewPieces.Add (Piece.PieceType.Mirror, Instantiate(mirrorPrefab).GetComponent<PieceObject>());
+		previewPieces.Add (Piece.PieceType.SafeZone, Instantiate(safeZonePrefab).GetComponent<PieceObject>());
+
+		foreach (PieceObject obj in previewPieces.Values) {
+			obj.gameObject.SetActive(false);
+			obj.SetPreview(true);
+		}
+	}
+
+	public void Select (Piece.PieceType piece)
+	{
+		this.previewPiece = previewPieces [piece];
+	}
+
+	public PieceObject PutSafeZone(GridSquare square){
 		return Put (square, safeZonePrefab);
 	}
 
-	public Piece PutMirror (GridSquare square, bool flipped)
+	public PieceObject PutMirror (GridSquare square, bool flipped)
 	{
 		ClearPreviews ();
 		var mirror = Put (square, mirrorPrefab);
@@ -192,7 +211,21 @@ public class Grid : MonoBehaviour {
 		return mirror;
 	}
 
-	private Piece Put(GridSquare square, GameObject prefab){
+	public PieceObject PutPiece (GridSquare square)
+	{
+		PieceObject piece = null;
+		switch (previewPiece.GetPieceType ()) {
+		case Piece.PieceType.Mirror:
+			var flipped = previewPiece.GetComponent<Mirror>().IsFlipped();
+			return PutMirror(square, flipped);
+		default:
+			piece = Put (square, previewPiece.gameObject);
+			break;
+		}
+		return piece;
+	}
+
+	private PieceObject Put(GridSquare square, GameObject prefab){
 		var dropper = PrepareDrop(square.position, prefab);
 
 		ChangeTurn ();
@@ -201,6 +234,8 @@ public class Grid : MonoBehaviour {
 			CheckTurn ();
 			FireTurrets();
 			square.piece = dropper.obj;
+			if(square.hover)
+				square.ShowPreview();
 		};
 
 		objects.Add (square.position, dropper.obj);
@@ -212,6 +247,13 @@ public class Grid : MonoBehaviour {
 		previewPiece.transform.position = pos.transform.position;
 		previewPiece.position = pos.position;
 		previewPiece.gameObject.SetActive (true);
+	}
+
+	public void SetPreviewPiece (Piece.PieceType type)
+	{
+		this.previewPiece.gameObject.SetActive (false);
+		this.previewPiece = this.previewPieces [type];
+		this.previewPiece.gameObject.SetActive (true);
 	}
 
 	public void HidePreview(){
@@ -238,7 +280,6 @@ public class Grid : MonoBehaviour {
 
 		P positional = obj.GetComponent<P>();
 		positional.position = position;
-		positional.grid = this;
 
 		if (checkBounds)
 			CheckBounds (position);
@@ -266,9 +307,9 @@ public class Grid : MonoBehaviour {
 	private Dropper PrepareDrop(Coordinate position, GameObject prefab) {
 		var obj = Instantiate (prefab);
 
-		Piece positional = obj.GetComponent<Piece>();
+		PieceObject positional = obj.GetComponent<PieceObject>();
 		positional.position = position;
-		positional.grid = this;
+		positional.SetPreview (false);
 
 		var dropper = Instantiate(this.dropperPrefab).GetComponent<Dropper>();
 		dropper.Insert (positional, this);
@@ -302,11 +343,11 @@ public class Grid : MonoBehaviour {
 		foreach (Coordinate coord in scenario.pieces.Keys) {
 			var piece = scenario.pieces[coord];
 
-			if(piece.GetType() == typeof(Scenario.SafeZone)){
+			if(piece.GetType() == typeof(Piece.SafeZone)){
 				// No need to translate here
 				objects.Add (coord, PrepareDrop(coord, safeZonePrefab).obj);
-			} else if(piece.GetType() == typeof(Scenario.Turret)){
-				Scenario.Turret turretPiece = ((Scenario.Turret)piece);
+			} else if(piece.GetType() == typeof(Piece.Turret)){
+				Piece.Turret turretPiece = ((Piece.Turret)piece);
 				var facing = turretPiece.facing;
 				var obj = PrepareDrop(coord, turretPrefab).obj;
 

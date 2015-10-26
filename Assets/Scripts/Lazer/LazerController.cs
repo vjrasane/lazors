@@ -80,7 +80,7 @@ public class LazerController : MonoBehaviour {
 	
 	bool ObjectExists (Coordinate pos, Direction dir)
 	{
-		List<Coordinate> coordinates = new List<Coordinate>(turret.grid.objects.Keys);
+		List<Coordinate> coordinates = new List<Coordinate>(Singletons.GRID.objects.Keys);
 		//Coordinate trans = turret.TranslateCoordinate (pos);
 		if (dir.y != 0)
 			return coordinates.Exists (c => pos.x == c.x && dir.y * c.y > dir.y * pos.y);
@@ -102,7 +102,8 @@ public class LazerController : MonoBehaviour {
 	}
 
 	public void Preview(){
-
+		if (!this.turret.IsActive ())
+			return;
 		var range = 0;
 		var facing = this.turret.GetFacing();
 		var position = this.turret.position;
@@ -138,9 +139,9 @@ public class LazerController : MonoBehaviour {
 		}
 	}
 
-	Piece FindGhostHit (Coordinate position)
+	PieceObject FindGhostHit (Coordinate position)
 	{
-		var previewPiece = turret.grid.previewPiece;
+		var previewPiece = Singletons.GRID.previewPiece;
 		if(!previewPiece.tag.Equals("SafeZone") && position.Equals(previewPiece.position)){
 			return previewPiece;
 		}
@@ -149,10 +150,10 @@ public class LazerController : MonoBehaviour {
 
 	private void DrawPreview (Coordinate position, Direction facing)
 	{
-		var previewPiece = turret.grid.previewPiece;
-		Func<Coordinate, Piece> hitReg = p => 
+		var previewPiece = Singletons.GRID.previewPiece;
+		Func<Coordinate, PieceObject> hitReg = p => 
 		{ 
-			Piece hit = null;
+			PieceObject hit = null;
 			if ((hit = FindGhostHit (p)) == null)
 				hit = FindRealHit (p);
 			return hit;
@@ -160,7 +161,7 @@ public class LazerController : MonoBehaviour {
 		DrawLazer (position, facing.Mirror (previewPiece.GetComponent<Mirror> ().IsFlipped ()), Constants.LAZER_PREVIEW_ALPHA, p =>  {}, hitReg,previewSections);
 	}
 
-	private void DrawLazer (Coordinate pos, Direction dir, float alpha, Action<Positional> onHit, Func<Coordinate, Piece> hitReg, List<LazerDirect> container)
+	private void DrawLazer (Coordinate pos, Direction dir, float alpha, Action<Positional> onHit, Func<Coordinate, PieceObject> hitReg, List<LazerDirect> container)
 	{
 		var facing = dir;
 		var position = pos;
@@ -212,10 +213,10 @@ public class LazerController : MonoBehaviour {
 		}
 	}
 
-	Piece FindRealHit (Coordinate position)
+	PieceObject FindRealHit (Coordinate position)
 	{
-		Piece hit;
-		if (turret.grid.objects.ContainsKey (position) && !(hit = turret.grid.objects [position]).tag.Equals ("SafeZone"))
+		PieceObject hit;
+		if (Singletons.GRID.objects.ContainsKey (position) && !(hit = Singletons.GRID.objects [position]).tag.Equals ("SafeZone"))
 			return hit;
 		return  null;
 	}

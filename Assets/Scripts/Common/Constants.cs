@@ -37,6 +37,9 @@ public class Constants {
 	public static float DROP_SHAKE_DURATION = 0.1f;
 	public static float DROP_SHAKE_MAGNITUDE = 0.025f;
 
+	public static float PIECE_SELECTOR_MARGIN = 20f;
+	public static float PIECE_SELECTOR_OFFSET = 10f;
+
 	static Constants(){
 		COLOR_TRANSPARENT.a = 0;
 	}

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 public class Scenario
 {
-	public Dictionary<Coordinate, GamePiece> pieces = new Dictionary<Coordinate, GamePiece> ();
+	public Dictionary<Coordinate, Piece> pieces = new Dictionary<Coordinate, Piece> ();
 	public List<Move> moves = new List<Move> ();
 
 	public int playerCount = 0;
@@ -11,8 +11,8 @@ public class Scenario
 	public Scenario(){
 		Coordinate turret1 = Direction.LEFT.toCoordinate () * 2;
 		Coordinate turret2 = Direction.RIGHT.toCoordinate () * 2;
-		pieces.Add (turret1, new Turret(Direction.LEFT, ++playerCount));
-		pieces.Add (turret2, new Turret(Direction.RIGHT, ++playerCount));
+		pieces.Add (turret1, new Piece.Turret(Direction.LEFT, ++playerCount));
+		pieces.Add (turret2, new Piece.Turret(Direction.RIGHT, ++playerCount));
 
 		Cross (turret1);
 		Cross (turret2);
@@ -22,7 +22,7 @@ public class Scenario
 		foreach (Direction c in Direction.ALL) {
 			var target = pos + c;
 			if(!pieces.ContainsKey(target))
-				pieces.Add (target, SafeZone.INSTANCE);
+				pieces.Add (target, Piece.SafeZone.INSTANCE);
 		}
 	}
 
@@ -30,7 +30,7 @@ public class Scenario
 		foreach (Direction c in Direction.CROSS) {
 			var target = pos + c;
 			if(!pieces.ContainsKey(target))
-				pieces.Add (target, SafeZone.INSTANCE);
+				pieces.Add (target, Piece.SafeZone.INSTANCE);
 		}
 	}
 
@@ -61,32 +61,5 @@ public class Scenario
 		public PlaceSafeZone(Coordinate pos, Player player) : base(pos, player){}
 	}
 
-	public interface GamePiece{};
-
-	public class Turret : GamePiece{
-		public Direction facing;
-		public int playerNum = -1;
-
-		public Turret(Direction facing) : this(facing, -1){
-
-		}
-
-		public Turret(Direction facing, int playerNum){
-			this.facing = facing;
-			this.playerNum = playerNum;
-		}
-	}
-
-	public class SafeZone : GamePiece{
-		public static SafeZone INSTANCE = new SafeZone();
-	}
-
-	public class Mirror : GamePiece {
-		public bool flipped;
-
-		public Mirror(bool flipped){
-			this.flipped = flipped;
-		}
-	}
 }
 

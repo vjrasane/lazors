@@ -17,6 +17,12 @@ public class LazerStraight : LazerDirect {
 		this.hilightRenderer = spriteInc.transform.FindChild("hilight").GetComponent<SpriteRenderer> ();
 	}
 
+	public override void Rotate(Direction facing){
+		var angle = this.facing.angle (facing);
+		this.transform.Rotate (new Vector3(0,0,angle));
+		this.facing = facing;
+	}
+
 	public override void SetVisibility(float alpha){
 		var beam = this.beamRenderer.color;
 		beam.a = alpha;

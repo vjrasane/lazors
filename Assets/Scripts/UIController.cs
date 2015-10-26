@@ -8,7 +8,7 @@ public class UIController : MonoBehaviour {
 	
 	public Text playerLabelPrefab;
 
-	private Text turnText;
+	private TurnText turnText;
 
 	private Animator welcomeTextAnim;
 	private Animator turnTextAnim;
@@ -23,7 +23,7 @@ public class UIController : MonoBehaviour {
 	}
 	// Use this for initialization
 	void Start () {
-		turnText = this.transform.FindChild ("turn_text").GetComponent<Text> ();
+		turnText = this.transform.FindChild ("turn_text").GetComponent<TurnText> ();
 
 		turnTextAnim = turnText.GetComponent<Animator> ();
 		welcomeTextAnim = this.transform.FindChild ("welcome_text").GetComponent<Animator>();
@@ -37,7 +37,7 @@ public class UIController : MonoBehaviour {
 
 	public static void DisplayTurnText(string playerName){
 		INSTANCE.turnTextAnim.SetTrigger ("Enter");
-		INSTANCE.turnText.text = playerName + "'s turn";
+		INSTANCE.turnText.playerName = playerName;
 	}
 
 	// Update is called once per frame

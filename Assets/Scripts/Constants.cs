@@ -34,6 +34,8 @@ public class Constants {
 	public static float ARROW_ROTATE_SPEED = 10f;
 
 	public static float DROP_INTERVAL = 0.05f;
+	public static float DROP_SHAKE_DURATION = 0.1f;
+	public static float DROP_SHAKE_MAGNITUDE = 0.025f;
 
 	static Constants(){
 		COLOR_TRANSPARENT.a = 0;

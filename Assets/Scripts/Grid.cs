@@ -30,7 +30,7 @@ public class Grid : MonoBehaviour {
 	private List<Player> players = new List<Player> ();
 
 	private Player inTurn;
-	private bool turnDone = false;
+	public bool turnDone = false;
 
 	private List<Turret> turrets = new List<Turret> ();
 
@@ -121,7 +121,7 @@ public class Grid : MonoBehaviour {
 					onUpdate.RemoveAt(i);
 		}
 
-		CheckTurn ();
+
 	}
 
 	void HandleDroppers ()
@@ -144,7 +144,7 @@ public class Grid : MonoBehaviour {
 		turnDone = true;
 	}
 
-	void CheckTurn ()
+	public void CheckTurn ()
 	{
 		if (turnDone) {
 			var current = this.players.IndexOf(inTurn);
@@ -179,28 +179,31 @@ public class Grid : MonoBehaviour {
 		}
 	}
 
-	public Piece PutSafeZone(Coordinate pos){
-		return Put (pos, safeZonePrefab);
+	public Piece PutSafeZone(GridSquare square){
+		return Put (square, safeZonePrefab);
 	}
 
-	public Piece PutMirror (Coordinate pos, bool flipped)
+	public Piece PutMirror (GridSquare square, bool flipped)
 	{
 		ClearPreviews ();
-		var mirror = Put (pos, mirrorPrefab);
+		var mirror = Put (square, mirrorPrefab);
 		mirror.GetComponent<Mirror> ().SetFlipped (flipped);
-
-		ChangeTurn ();
 
 		return mirror;
 	}
 
-	private Piece Put(Coordinate pos, GameObject prefab){
-		var dropper = PrepareDrop(pos, prefab);
+	private Piece Put(GridSquare square, GameObject prefab){
+		var dropper = PrepareDrop(square.position, prefab);
 
+		ChangeTurn ();
 		DrawSquares ();
-		dropper.onDone = FireTurrets;
+		dropper.onDone = ()=>{
+			CheckTurn ();
+			FireTurrets();
+			square.piece = dropper.obj;
+		};
 
-		objects.Add (pos, dropper.obj);
+		objects.Add (square.position, dropper.obj);
 
 		return dropper.obj;
 	}

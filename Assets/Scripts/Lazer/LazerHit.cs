@@ -30,6 +30,10 @@ public class LazerHit : LazerDirect {
 		this.lazerOut.gameObject.SetActive (turn);
 	}
 
+	public override void Rotate(Direction facing){
+		this.lazerIn.Rotate (facing);
+	}
+
 	public void RotateTurn(Direction facing){
 		this.lazerOut.Rotate (facing);
 	}
@@ -49,11 +53,12 @@ public class LazerHit : LazerDirect {
 			var flipped = hit.GetComponent<Mirror>().IsFlipped();
 			
 			var front = false;
-			
-			if(this.facing.y != 0){
-				front = this.facing.y > 0;
+			var facing = this.lazerIn.GetFacing();
+
+			if(facing.y != 0){
+				front = facing.y > 0;
 			} else {
-				front = this.facing.x > 0;
+				front = facing.x > 0;
 				front = flipped ? !front : front;
 			}
 			return front;

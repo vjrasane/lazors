@@ -15,6 +15,7 @@ public class GridSquare : Positional {
 
 	private bool piecePreview = false;
 	private bool lazerPreview = false;
+	private bool hoverPreview = false;
 
 	void Awake(){
 		this.renderer = this.GetComponent<SpriteRenderer> ();
@@ -48,13 +49,14 @@ public class GridSquare : Positional {
 
 	void ShowPreview ()
 	{
-		if (!piecePreview) {
+		if (!piecePreview && this.piece == null) {
 			this.piecePreview = true;
-			if(this.piece != null)
-				this.piece.OnHover();
-			else {
-				grid.PreviewAt(this);
-			}
+			grid.PreviewAt(this);
+		}
+
+		if(!hoverPreview && this.piece != null) {
+			this.hoverPreview = true;
+			this.piece.OnHover();
 		}
 
 		if (!lazerPreview) {
@@ -66,11 +68,13 @@ public class GridSquare : Positional {
 	void HidePreview ()
 	{
 		if (piecePreview) {
-			if(this.piece != null)
-				this.piece.OnExit();
-			else
-				grid.HidePreview();
+			grid.HidePreview();
 			this.piecePreview = false;
+		}
+
+		if (hoverPreview) {
+			this.piece.OnExit();
+			this.hoverPreview = false;
 		}
 
 		if (lazerPreview) {
@@ -81,14 +85,19 @@ public class GridSquare : Positional {
 
 	void HandleClick ()
 	{
+		if(this.grid.turnDone)
+			return;
+
 		if (Input.GetMouseButtonDown (0)) {
 			if(this.piece != null){
 				this.piece.OnClick();
 			} else {
-				this.piece = grid.PutMirror (position, grid.previewPiece.IsFlipped());
+				grid.PutMirror (this, grid.previewPiece.IsFlipped());
 			}
 		} else if (Input.GetMouseButtonDown (1)) {
-			this.piece = grid.PutSafeZone (position);
+
+			// TODO Move to piece selection, is buggy
+			this.piece = grid.PutSafeZone (this);
 		}
 	}
 

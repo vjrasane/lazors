@@ -3,8 +3,6 @@ using System.Collections.Generic;
 
 public class Direction : Coordinate {
 
-	private static Coordinate LEFT_COORD = new Coordinate (-1, 0);
-
 	public static Direction LEFT = new Direction (-1, 0);
 	public static Direction TOP = new Direction (0, 1);
 	public static Direction DOWN = new Direction (0, -1);
@@ -40,22 +38,35 @@ public class Direction : Coordinate {
 		ALL.AddRange (DIAGONAL);
 	}
 
-	public float angle = 0.0f;
-
-	public Direction(int x, int y) : base(x,y) {
-		calculateAngle (LEFT_COORD);
-	}
+	public Direction(int x, int y) : base(x,y) {}
 
 	public Coordinate toCoordinate(){
 		return this.copy ();
 	}
 
-	private void calculateAngle(Coordinate other){
+	public float angle(Coordinate other){
 		float a = Vector2.Angle (this.asVec2(), other.asVec2());
+//		if (this.x != 0) {
+//			if (other.x != 0)
+//				return 0 - other.x * this.x * 180;
+//			return 90 * other.y * this.x;
+//		} else {
+//			if (other.y != 0)
+//				return 0 - other.y * this.y * 180;
+//			return -90 * other.x * this.y;
+//		}
 		if (a < 180) {
-			a = this.NonZero() * other.NonZero() * a;
+			if(this.y != 0)
+				a = this.NonZero() * other.NonZero() * -a;
+			else 
+				a = this.NonZero() * other.NonZero() * a;
 		}
-		this.angle = a;
+		return a;
+//		float a = Vector2.Angle (this.asVec2(), other.asVec2());
+//		if (a < 180) {
+//			a = this.NonZero() * other.NonZero() * a;
+//		}
+//		return a;
 	}
 
 	public static Direction operator +(Direction c1, Direction c2){
@@ -74,7 +85,7 @@ public class Direction : Coordinate {
 		int flip = flipped ? 1 : -1;
 		int newY = flip * this.x;
 		int newX = flip * this.y;
-		return ALL.Find(d => d.x == newX && d.y == newY);
+		return new Direction(newX, newY);
 	}
 
 	public Direction Reverse(){

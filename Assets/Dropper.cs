@@ -33,6 +33,7 @@ public class Dropper : MonoBehaviour {
 	public void Done() {
 		this.done = true;
 		Clear ();
+		Camera.main.GetComponent<CameraController> ().Shake (Constants.DROP_SHAKE_DURATION, Constants.DROP_SHAKE_MAGNITUDE);
 		this.onDone ();
 	}
 

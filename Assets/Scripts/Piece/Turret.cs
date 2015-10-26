@@ -48,7 +48,7 @@ public class Turret : Piece {
 	}
 
 	public void RotateGun(Direction facing){
-		gun.Rotate (new Vector3(0,0,facing.angle));
+		gun.Rotate (new Vector3(0,0,this.facing.angle(facing)));
 		this.facing = facing;
 	}
 
@@ -94,10 +94,10 @@ public class Turret : Piece {
 			else {
 				var explosion = Instantiate (explosionPrefab);
 				explosion.transform.position = this.transform.position;
-				Camera.main.GetComponent<CameraController> ().Shake ();
+				Camera.main.GetComponent<CameraController> ().Shake (Constants.EXPLOSION_SHAKE_DURATION, Constants.EXPLOSION_SHAKE_MAGNITUDE);
 				var smoke = Instantiate (smokePrefab);
 				Vector3 pos = this.transform.position;
-				pos.z = -1;
+				//pos.z = -1;
 				smoke.transform.position = pos;
 				baseRenderer.color = destroyedColor;
 				gunRenderer.color = destroyedColor;

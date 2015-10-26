@@ -13,8 +13,8 @@ public class LazerController : MonoBehaviour {
 	private List<LazerDirect> sections = new List<LazerDirect>();
 	private List<LazerDirect> previewSections = new List<LazerDirect>();
 
-	private static List<LazerStraight> LAZER_POOL_STRAIGHT = new List<LazerStraight> ();
-	private static List<LazerHit> LAZER_POOL_HIT = new List<LazerHit> ();
+	private static Queue<LazerStraight> LAZER_POOL_STRAIGHT = new Queue<LazerStraight> ();
+	private static Queue<LazerHit> LAZER_POOL_HIT = new Queue<LazerHit> ();
 
 	public Color lazerColor;
 	private int layer;
@@ -54,29 +54,28 @@ public class LazerController : MonoBehaviour {
 		lazer.gameObject.SetActive (false);
 
 		if (lazer is LazerStraight)
-			LAZER_POOL_STRAIGHT.Add((LazerStraight)lazer);
+			LAZER_POOL_STRAIGHT.Enqueue((LazerStraight)lazer);
 		else if (lazer is LazerHit)
-			LAZER_POOL_HIT.Add ((LazerHit)lazer);
+			LAZER_POOL_HIT.Enqueue ((LazerHit)lazer);
 	}
 	
-	private L GetFromPool<L>(List<L> pool) where L : LazerDirect {
-		var lazer = pool[0];
+	private L GetFromPool<L>(Queue<L> pool) where L : LazerDirect {
+		var lazer = pool.Dequeue ();
 		lazer.gameObject.SetActive(true);
-		pool.RemoveAt (0);
 		return lazer;
 	}
 
-	private L GetInstance<L>(GameObject prefab, List<L> pool) where L : LazerDirect
+	private L GetInstance<L>(GameObject prefab, Queue<L> pool) where L : LazerDirect
 	{
 		if (pool.Count <= 0)
-			return Instantiate (lazerPrefab).GetComponent<L>();
+			return Instantiate (prefab).GetComponent<L>();
 		else {
 			return GetFromPool (pool);
 		}
 	}
 
 	bool ObjectExists(LazerStraight lazer){
-		return ObjectExists (lazer.position, lazer.facing);
+		return ObjectExists (lazer.position, lazer.GetFacing());
 	}
 	
 	bool ObjectExists (Coordinate pos, Direction dir)
@@ -99,7 +98,7 @@ public class LazerController : MonoBehaviour {
 
 	public void Fire(){
 		if(this.turret.IsActive())
-			DrawLazer (this.turret.position, this.turret.GetFacing(), 1, OnHit, FindRealHit, sections);
+			DrawLazer (this.turret.position, this.turret.GetFacing(), 1, DestroyTurret, FindRealHit, sections);
 	}
 
 	public void Preview(){
@@ -221,7 +220,7 @@ public class LazerController : MonoBehaviour {
 		return  null;
 	}
 
-	void OnHit (Positional hit)
+	void DestroyTurret (Positional hit)
 	{
 		if(hit.tag.Equals("Turret")) {
 		   hit.GetComponent<Turret> ().Explode();
@@ -229,9 +228,11 @@ public class LazerController : MonoBehaviour {
 	}
 
 	private LazerStraight InstantiateAt(Coordinate pos, Direction facing, float alpha, int length, List<LazerDirect> container){
-		LazerStraight lazer = Instantiate (lazerPrefab).GetComponent<LazerStraight> ();
-		
+		LazerStraight lazer = GetInstance<LazerStraight>(lazerPrefab, LAZER_POOL_STRAIGHT);
+		//LazerStraight lazer = Instantiate(lazerPrefab).GetComponent<LazerStraight>();
 		InitLazer (lazer, pos, facing, alpha, length, container);
+
+		lazer.BringToFront (turret.player.number);
 
 		return lazer;
 	}
@@ -241,8 +242,8 @@ public class LazerController : MonoBehaviour {
 	}
 
 	private LazerHit InstantiateHitAt(Coordinate pos, Direction facing, float alpha, Positional hit, List<LazerDirect> container){
-		LazerHit lazer = Instantiate (lazerHitPrefab).GetComponent<LazerHit> ();
-
+		LazerHit lazer = GetInstance<LazerHit>(lazerHitPrefab, LAZER_POOL_HIT);
+		//LazerHit lazer = Instantiate(lazerHitPrefab).GetComponent<LazerHit>();
 		InitLazer (lazer, pos, facing, alpha, 0.5f, container);
 
 		lazer.SetLayerOrder (hit, turret.player.number);
@@ -255,7 +256,7 @@ public class LazerController : MonoBehaviour {
 		
 		lazer.transform.parent = this.transform;
 		lazer.transform.localPosition = Vector2.zero;
-		lazer.transform.Translate(translated.asVec3() * Lazer.LENGTH);
+		lazer.transform.Translate(translated.asVec3() * Lazer.LENGTH, Space.World);
 
 		lazer.SetColor (lazerColor);
 		lazer.Rotate (facing);

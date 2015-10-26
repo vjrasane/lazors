@@ -25,9 +25,6 @@ public class CameraController : MonoBehaviour {
 	}
 
 	void Update(){
-		if(Input.GetKeyDown(KeyCode.S)){
-			Shake ();
-		}
 		HandleShake ();
 		HandleZoom ();
 	}
@@ -64,28 +61,29 @@ public class CameraController : MonoBehaviour {
 		oldPosition = pos;
 	}
 
-	private bool shaking = false;
+
 	private Vector3 initShakePosition = Vector3.zero;
 	private float shake = 0;
+	private float shakeMagnitude = 0f;
 
-	public void Shake(){
+	public void Shake(float duration, float magnitude){
 		initShakePosition = this.transform.position;
-		shaking = true;
-		shake = Constants.EXPLOSION_SHAKE_DURATION;
+		shakeMagnitude = magnitude;
+		shake = duration;
 	}
 
 	void HandleShake ()
 	{
-		if (shaking) {
+		if (shakeMagnitude > 0) {
 			this.transform.position = initShakePosition;
 			if (shake > 0) {
-				Vector3 rand = Random.insideUnitCircle * Constants.EXPLOSION_SHAKE_MAGNITUDE;
+				Vector3 rand = Random.insideUnitCircle * shakeMagnitude;
 				this.transform.Translate(rand);
 				shake -= Time.deltaTime;
 			}
 			else {
 				shake = 0.0f;
-				shaking = false;
+				shakeMagnitude = 0f;
 			}
 		}
 	}

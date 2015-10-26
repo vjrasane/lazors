@@ -15,6 +15,7 @@ public class Mirror : Piece {
 		if (this.position != null && !this.preview) {
 			grid.FireTurrets ();
 			grid.ChangeTurn();
+			grid.CheckTurn();
 		}
 	}
 
@@ -34,7 +35,7 @@ public class Mirror : Piece {
 	}
 
 	private bool revertFlip;
-	// Use this for initialization
+
 	public override void OnHover () {
 		revertFlip = this.grid.previewPiece.IsFlipped () == this.flipped;
 		if (revertFlip)
@@ -43,6 +44,9 @@ public class Mirror : Piece {
 
 		grid.arrows.transform.position = this.transform.position;
 		grid.arrows.SetActive (true);
+
+		grid.ClearPreviews ();
+		grid.PreviewLazers ();
 	}
 
 	public override void OnExit () {

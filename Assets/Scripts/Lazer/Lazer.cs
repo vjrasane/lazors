@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 
-public abstract class Lazer : Positional {
+public abstract class Lazer : PositionalObject {
 
 	public static float LENGTH = 0.0f;
 

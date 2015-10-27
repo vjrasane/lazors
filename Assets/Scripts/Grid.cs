@@ -50,17 +50,20 @@ public class Grid : MonoBehaviour {
 	private List<Dropper> dropperQueue = new List<Dropper>();
 	private List<Dropper> dropperWait = new List<Dropper>();
 
+	public Color squareInactiveColor;
+	public Color squareActiveColor;
+
 	void Awake(){
 		Singletons.GRID = this;
 
 		InitPreviewPieces ();
 
 		center = new Coordinate((int)(Constants.GRID_MAX_SIZE / 2), (int)(Constants.GRID_MAX_SIZE / 2));
-		var squareBlock = InstantiateAt<Positional>(TranslateCoordinate(center), squarePrefab);
+		var squareBlock = InstantiateAt<PositionalObject>(TranslateCoordinate(center), squarePrefab);
 
 		previewPiece = Instantiate (mirrorPrefab).GetComponent<Mirror>();
 		previewPiece.GetComponent<SpriteRenderer> ().color = previewColor;
-		previewPiece.preview = true;
+		previewPiece.SetPreview (true);
 		previewPiece.gameObject.SetActive (false);
 
 		SQUARE_SIZE = squareBlock.GetComponent<BoxCollider2D> ().bounds.size.x;
@@ -113,7 +116,7 @@ public class Grid : MonoBehaviour {
 	void Update(){
 		HandleDroppers ();
 
-		if (Input.GetKeyDown (KeyCode.Tab) && previewPiece.gameObject.activeSelf && this.squares[previewPiece.position].piece == null) {
+		if (Input.GetKeyDown (KeyCode.Tab) && previewPiece.gameObject.activeSelf && this.squares[previewPiece.Position].piece == null) {
 			previewPiece.Rotate();
 			ClearPreviews();
 			PreviewLazers();
@@ -152,8 +155,8 @@ public class Grid : MonoBehaviour {
 	public void CheckTurn ()
 	{
 		if (turnDone) {
-			var current = this.players.IndexOf(inTurn);
-			inTurn = this.players[++current % this.players.Count];
+			var next = (this.players.IndexOf(inTurn) + 1) % this.players.Count;
+			inTurn = this.players[next];
 			turnDone = false;
 			Singletons.UI.DisplayTurnText (inTurn.name);
 		}
@@ -170,12 +173,14 @@ public class Grid : MonoBehaviour {
 
 				var coordinate = new Coordinate (x, y);
 				if(!squares.ContainsKey(coordinate)){
-					var squareObj = InstantiateAt<Positional>(coordinate, squarePrefab);
+					var squareObj = InstantiateAt<PositionalObject>(coordinate, squarePrefab);
 
 					var gridSquare = squareObj.GetComponent<GridSquare>();
 
-					gridSquare.position = coordinate;
+					gridSquare.Position = coordinate;
 					gridSquare.piece = objects.ContainsKey(coordinate) ? objects[coordinate] : null;
+					gridSquare.inactiveColor = this.squareInactiveColor;
+					gridSquare.activeColor = this.squareActiveColor;
 
 					squares.Add(coordinate, gridSquare);
 				}
@@ -198,10 +203,6 @@ public class Grid : MonoBehaviour {
 		this.previewPiece = previewPieces [piece];
 	}
 
-	public PieceObject PutSafeZone(GridSquare square){
-		return Put (square, safeZonePrefab);
-	}
-
 	public PieceObject PutMirror (GridSquare square, bool flipped)
 	{
 		ClearPreviews ();
@@ -211,7 +212,7 @@ public class Grid : MonoBehaviour {
 		return mirror;
 	}
 
-	public PieceObject PutPiece (GridSquare square)
+	private PieceObject PutPiece (GridSquare square)
 	{
 		PieceObject piece = null;
 		switch (previewPiece.GetPieceType ()) {
@@ -225,8 +226,44 @@ public class Grid : MonoBehaviour {
 		return piece;
 	}
 
+	private Queue<Scenario.Move> prevMoves = new Queue<Scenario.Move> ();
+
+	public void Activate(Coordinate position){
+		var move = new Scenario.Activate (position, inTurn);
+		this.scenario.moves.Enqueue (move);
+
+		CycleMoveColors (move);
+
+		this.objects [position].OnClick ();
+	}
+
+	public void Place(Coordinate position){
+		var move = new Scenario.Place (position, previewPiece.AsPiece (), inTurn);
+		this.scenario.moves.Enqueue (move);
+
+		CycleMoveColors (move);
+
+		PutPiece (squares [position]);
+	}
+
+	private void CycleMoveColors (Scenario.Move move)
+	{
+		prevMoves.Enqueue (move);
+		if (prevMoves.Count > players.Count) {
+			var prev = prevMoves.Dequeue ();
+			var prevSquare = squares [prev.Position];
+			prevSquare.inactiveColor = squareInactiveColor;
+			prevSquare.SetInactive();
+		}
+		foreach (Scenario.Move m in prevMoves) {
+			var square = squares[m.Position];
+			square.inactiveColor = m.player.color;
+			square.SetInactive();
+		}
+	}
+
 	private PieceObject Put(GridSquare square, GameObject prefab){
-		var dropper = PrepareDrop(square.position, prefab);
+		var dropper = PrepareDrop(square.Position, prefab);
 
 		ChangeTurn ();
 		DrawSquares ();
@@ -238,14 +275,14 @@ public class Grid : MonoBehaviour {
 				square.ShowPreview();
 		};
 
-		objects.Add (square.position, dropper.obj);
+		objects.Add (square.Position, dropper.obj);
 
 		return dropper.obj;
 	}
 
-	public void PreviewAt(Positional pos){
+	public void PreviewAt(PositionalObject pos){
 		previewPiece.transform.position = pos.transform.position;
-		previewPiece.position = pos.position;
+		previewPiece.Position = pos.Position;
 		previewPiece.gameObject.SetActive (true);
 	}
 
@@ -257,12 +294,12 @@ public class Grid : MonoBehaviour {
 	}
 
 	public void HidePreview(){
-		previewPiece.position = null;
+		previewPiece.Position = null;
 		previewPiece.gameObject.SetActive (false);
 	}
 
 	public void PreviewLazers(){
-		turrets.ForEach(t => t.Preview());
+		turrets.ForEach(t => t.ShowPreview());
 	}
 
 	public void ClearPreviews(){
@@ -279,7 +316,7 @@ public class Grid : MonoBehaviour {
 		obj.transform.localPosition = GetPosition (position);
 
 		P positional = obj.GetComponent<P>();
-		positional.position = position;
+		positional.Position = position;
 
 		if (checkBounds)
 			CheckBounds (position);
@@ -308,7 +345,7 @@ public class Grid : MonoBehaviour {
 		var obj = Instantiate (prefab);
 
 		PieceObject positional = obj.GetComponent<PieceObject>();
-		positional.position = position;
+		positional.Position = position;
 		positional.SetPreview (false);
 
 		var dropper = Instantiate(this.dropperPrefab).GetComponent<Dropper>();
@@ -369,7 +406,9 @@ public class Grid : MonoBehaviour {
 	{
 		for (var i = 0; i < count; i++) {
 			var num = i + 1;
-			players.Add(new Player("Player " + num, num));
+			var player = new Player ("Player " + num, num, Singletons.COLORS.GetRandom());
+		
+			players.Add (player);
 		}
 	}
 

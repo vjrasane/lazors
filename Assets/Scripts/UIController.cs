@@ -4,8 +4,6 @@ using UnityEngine.UI;
 
 public class UIController : MonoBehaviour {
 
-	private static UIController INSTANCE;
-	
 	public Text playerLabelPrefab;
 
 	private TurnText turnText;
@@ -50,7 +48,7 @@ public class UIController : MonoBehaviour {
 	public void AddPlayerLabel(string playerName, Transform transform){
 		var label = Instantiate<Text> (playerLabelPrefab);
 		label.text = playerName;
-		label.transform.SetParent(transform, true);
+		label.transform.SetParent(this.transform);
 		playerLabelPositions.Add (label, transform);
 	}
 }

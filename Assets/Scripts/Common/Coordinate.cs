@@ -68,12 +68,5 @@ public class Coordinate : object {
 		return "{" + x + "," + y + "}";
 	}
 
-	public int NonZero(){
-		if (x != 0)
-			return x;
-		else 
-			return y;
-	}
-
 }
 

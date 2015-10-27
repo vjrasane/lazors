@@ -44,17 +44,8 @@ public class Direction : Coordinate {
 		return this.copy ();
 	}
 
-	public float angle(Coordinate other){
+	public float angle(Direction other){
 		float a = Vector2.Angle (this.asVec2(), other.asVec2());
-//		if (this.x != 0) {
-//			if (other.x != 0)
-//				return 0 - other.x * this.x * 180;
-//			return 90 * other.y * this.x;
-//		} else {
-//			if (other.y != 0)
-//				return 0 - other.y * this.y * 180;
-//			return -90 * other.x * this.y;
-//		}
 		if (a < 180) {
 			if(this.y != 0)
 				a = this.NonZero() * other.NonZero() * -a;
@@ -62,11 +53,13 @@ public class Direction : Coordinate {
 				a = this.NonZero() * other.NonZero() * a;
 		}
 		return a;
-//		float a = Vector2.Angle (this.asVec2(), other.asVec2());
-//		if (a < 180) {
-//			a = this.NonZero() * other.NonZero() * a;
-//		}
-//		return a;
+	}
+
+	private int NonZero(){
+		if (x != 0)
+			return x;
+		else 
+			return y;
 	}
 
 	public static Direction operator +(Direction c1, Direction c2){

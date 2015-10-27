@@ -4,7 +4,7 @@ using System.Collections.Generic;
 public class Scenario
 {
 	public Dictionary<Coordinate, Piece> pieces = new Dictionary<Coordinate, Piece> ();
-	public List<Move> moves = new List<Move> ();
+	public Queue<Move> moves = new Queue<Move> ();
 
 	public int playerCount = 0;
 
@@ -35,30 +35,47 @@ public class Scenario
 	}
 
 	public abstract class Move : Positional {
-
+		
 		public Player player;
-
-		public Move(Coordinate pos, Player player){
+		private Coordinate position;
+		private bool preview;
+		
+		#region Positional implementation
+		public Coordinate Position {
+			get {
+				return position;
+			}
+			set {
+				position = value;
+			}
+		}
+		public bool Preview {
+			get {
+				return preview;
+			}
+			set {
+				preview = value;
+			}
+		}
+		#endregion
+	
+		public Move(Coordinate pos,  Player player){
 			this.position = pos;
 			this.player = player;
 		}
 	}
 
-	public class PlaceMirror : Move {
+	public class Place : Move {
+
+		public Piece piece;
 		
-		public bool flipped;
-		
-		public PlaceMirror(Coordinate pos, Player player, bool flipped) : base(pos, player){
-			this.flipped = flipped;
+		public Place(Coordinate pos, Piece piece, Player player) : base(pos, player){
+			this.piece = piece;
 		}
 	}
 
-	public class FlipMirror : Move {
-		public FlipMirror(Coordinate pos, Player player) : base(pos, player){}
-	}
-
-	public class PlaceSafeZone : Move {
-		public PlaceSafeZone(Coordinate pos, Player player) : base(pos, player){}
+	public class Activate : Move {
+		public Activate(Coordinate pos, Player player) : base(pos, player){}
 	}
 
 }

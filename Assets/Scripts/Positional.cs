@@ -1,10 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Positional : MonoBehaviour {
+public interface Positional {
 
-	public Coordinate position;
-	//public Grid grid;
-	public bool preview;
+	Coordinate Position { get; set; }
+	bool Preview { get; set; }
 
 }

@@ -38,16 +38,16 @@ public class LazerHit : LazerDirect {
 		this.lazerOut.Rotate (facing);
 	}
 
-	public void SetLayerOrder (Positional hit, int layer)
+	public void SetLayerOrder (PieceObject hit, int layer)
 	{
 		SendTo (IsFront(hit), layer);
 	}
 	
-	private bool IsFront (Positional hit)
+	private bool IsFront (PieceObject hit)
 	{
 		if (hit == null)
 			return false;
-		else if(!hit.tag.Equals(Constants.MIRROR_TAG))
+		else if(hit.GetPieceType() != Piece.PieceType.Mirror)
 			return true;
 		else {
 			var flipped = hit.GetComponent<Mirror>().IsFlipped();

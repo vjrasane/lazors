@@ -5,10 +5,10 @@ public class Mirror : PieceObject {
 
 	private bool flipped = false;
 
-	public void Flip(){
+	private void Flip(){
 		DoFlip ();
 		
-		if (this.position != null && !this.preview) {
+		if (this.Position != null && !this.Preview) {
 			Singletons.GRID.FireTurrets ();
 			Singletons.GRID.ChangeTurn();
 			Singletons.GRID.CheckTurn();
@@ -20,7 +20,7 @@ public class Mirror : PieceObject {
 			DoFlip ();
 	}
 
-	void DoFlip ()
+	private void DoFlip ()
 	{
 		this.flipped = !flipped;
 		this.transform.Rotate (new Vector3 (0, 180, 0));
@@ -40,6 +40,11 @@ public class Mirror : PieceObject {
 		return Piece.PieceType.Mirror;
 	}
 
+	public override Piece AsPiece ()
+	{
+		return new Piece.Mirror (flipped);
+	}
+
 	public override void  HandleClick(){
 		Flip ();
 	}
@@ -52,7 +57,7 @@ public class Mirror : PieceObject {
 		var preview = Singletons.GRID.previewPiece.GetComponent<Mirror> ();
 		wasFlipped = preview.IsFlipped ();
 		if (wasFlipped == this.flipped)
-			preview.Flip ();
+			preview.DoFlip ();
 		Singletons.GRID.PreviewAt (this);
 
 		Singletons.GRID.arrows.transform.position = this.transform.position;

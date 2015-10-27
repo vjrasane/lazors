@@ -37,9 +37,13 @@ public class Turret : PieceObject {
 		this.baseShadowRenderer = this.transform.FindChild("base_shadow").GetComponent<SpriteRenderer> ();
 		this.gunShadowRenderer = this.gun.transform.FindChild("gun_shadow").GetComponent<SpriteRenderer> ();
 
+	}
+
+	void Start(){
+		this.normalColor = player.color;
+		
 		baseRenderer.color = normalColor;
 		gunRenderer.color = normalColor;
-
 	}
 
 	public void Fire(){
@@ -68,7 +72,7 @@ public class Turret : PieceObject {
 		return active && !destroyed;
 	}
 
-	public void Preview ()
+	public void ShowPreview ()
 	{
 		this.lazer.Preview ();
 	}
@@ -111,11 +115,11 @@ public class Turret : PieceObject {
 	}
 
 	public Coordinate TranslateCoordinate(Coordinate pos){
-		return pos + this.position;
+		return pos + this.Position;
 	}
 
 	public Coordinate ReverseTranslate(Coordinate pos){
-		return pos - this.position;
+		return pos - this.Position;
 	}
 
 	private float explodeTime = 0.0f;
@@ -133,6 +137,11 @@ public class Turret : PieceObject {
 	public override Piece.PieceType GetPieceType ()
 	{
 		return Piece.PieceType.Turret;
+	}
+
+	public override Piece AsPiece ()
+	{
+		return new Piece.Turret(facing, player.number);
 	}
 
 	#endregion

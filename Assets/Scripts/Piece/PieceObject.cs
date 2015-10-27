@@ -1,15 +1,16 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public abstract class PieceObject : Positional {
+public abstract class PieceObject : PositionalObject {
 
 	public abstract Piece.PieceType GetPieceType();
+	public abstract Piece AsPiece();
 
 	public Color normalColor;
 	public Color previewColor;
 
 	public void SetPreview (bool preview){
-		this.preview = preview;
+		//this.SetPreview(preview);
 		this.SetColor(preview);
 	}
 
@@ -25,22 +26,22 @@ public abstract class PieceObject : Positional {
 
 	public void OnClick ()
 	{
-		if (GameSettings.ALLOWED_CLICKS.Contains (this.GetPieceType ()))
+		if (GameSettings.ALLOWED_ACTIVATES.Contains (this.GetPieceType ()))
 			HandleClick ();
-		if (Singletons.GRID.squares [this.position].hover)
+		if (Singletons.GRID.squares [this.Position].hover)
 			HandleHover ();
 	}
 
 	public void OnHover ()
 	{
-		if (GameSettings.ALLOWED_CLICKS.Contains (this.GetPieceType ()))
+		if (GameSettings.ALLOWED_ACTIVATES.Contains (this.GetPieceType ()))
 			HandleHover ();
 		else
 			DisplayBlocked ();
 	}
 
 	public void OnExit(){
-		if (GameSettings.ALLOWED_CLICKS.Contains (this.GetPieceType ()))
+		if (GameSettings.ALLOWED_ACTIVATES.Contains (this.GetPieceType ()))
 			HandleExit ();
 		else
 			HideBlocked ();

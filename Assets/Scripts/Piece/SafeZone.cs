@@ -20,5 +20,10 @@ public class SafeZone : PieceObject {
 		return Piece.PieceType.SafeZone;
 	}
 
+	public override Piece AsPiece ()
+	{
+		return new Piece.SafeZone();
+	}
+
 	#endregion
 }

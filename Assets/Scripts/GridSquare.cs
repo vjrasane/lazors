@@ -2,7 +2,7 @@
 using System.Collections;
 using UnityEngine.EventSystems;
 
-public class GridSquare : Positional, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler {
+public class GridSquare : PositionalObject, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler {
 
 	// Shitty Unity doesn't actually provide access to renderer/collider but complains about using them as a variable...
 	#pragma warning disable 0108
@@ -17,22 +17,9 @@ public class GridSquare : Positional, IPointerEnterHandler, IPointerExitHandler,
 	private bool lazerPreview = false;
 	private bool hoverPreview = false;
 
-	void Awake(){
+	void Start(){
 		this.renderer = this.GetComponent<SpriteRenderer> ();
 		this.renderer.color = inactiveColor;
-	}
-
-	// Use this for initialization
-	void Start () {
-
-	}
-
-	void OnMouseDown(){
-
-	}
-
-
-	void Update () {
 	}
 
 	public void ShowPreview ()
@@ -71,22 +58,14 @@ public class GridSquare : Positional, IPointerEnterHandler, IPointerExitHandler,
 		}
 	}
 
-	void HandleClick ()
+	public void SetActive ()
 	{
-		if(Singletons.GRID.turnDone)
-			return;
+		this.renderer.color = activeColor;
+	}
 
-		if (Input.GetMouseButtonDown (0)) {
-			if(this.piece != null){
-				this.piece.OnClick();
-			} else {
-				Singletons.GRID.PutPiece (this);
-			}
-		} else if (Input.GetMouseButtonDown (1)) {
-
-			// TODO Move to piece selection, is buggy
-			this.piece = Singletons.GRID.PutSafeZone (this);
-		}
+	public void SetInactive ()
+	{
+		this.renderer.color = inactiveColor;
 	}
 
 	#region IPointerClickHandler implementation
@@ -97,14 +76,10 @@ public class GridSquare : Positional, IPointerEnterHandler, IPointerExitHandler,
 		
 		if (eventData.button.Equals(PointerEventData.InputButton.Left)) {
 			if(this.piece != null){
-				this.piece.OnClick();
+				Singletons.GRID.Activate(this.Position);
 			} else {
-				Singletons.GRID.PutPiece(this);
+				Singletons.GRID.Place(this.Position);
 			}
-		} else if (eventData.button.Equals(PointerEventData.InputButton.Right)) {
-			
-			// TODO Move to piece selection, is buggy
-			this.piece = Singletons.GRID.PutSafeZone (this);
 		}
 	}
 	#endregion
@@ -115,7 +90,7 @@ public class GridSquare : Positional, IPointerEnterHandler, IPointerExitHandler,
 	public void OnPointerEnter (PointerEventData eventData)
 	{
 		this.hover = true;
-		this.renderer.color = activeColor;
+		SetActive ();
 		ShowPreview ();
 	}
 
@@ -126,7 +101,7 @@ public class GridSquare : Positional, IPointerEnterHandler, IPointerExitHandler,
 	public void OnPointerExit (PointerEventData eventData)
 	{
 		this.hover = false;
-		this.renderer.color = inactiveColor;
+		SetInactive ();
 		HidePreview ();
 	}
 

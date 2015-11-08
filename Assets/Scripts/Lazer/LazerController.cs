@@ -3,9 +3,7 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 
-public class LazerController : MonoBehaviour {
-
-	public Turret turret;
+public abstract class LazerController : PlayerObject {
 
 	public GameObject lazerPrefab;
 	public GameObject lazerHitPrefab;
@@ -18,10 +16,10 @@ public class LazerController : MonoBehaviour {
 
 	public Color lazerColor;
 	private int layer;
+	
+	protected bool active = true;
 
-	private Color previewColor;
-
-	void Awake(){
+	public void Init(){
 		var lazerSprite = lazerPrefab.transform.FindChild ("sprite");
 		lazerSprite.localPosition = Vector2.zero;
 
@@ -31,10 +29,6 @@ public class LazerController : MonoBehaviour {
 
 		this.previewColor = new Color(lazerColor.r, lazerColor.g, lazerColor.b);
 		this.previewColor.a = Constants.LAZER_PREVIEW_ALPHA;
-	}
-
-	void FixedUpdate () {
-
 	}
 
 	public void CeaseFire(){
@@ -74,11 +68,11 @@ public class LazerController : MonoBehaviour {
 		}
 	}
 
-	bool ObjectExists(LazerStraight lazer){
+	private bool ObjectExists(LazerStraight lazer){
 		return ObjectExists (lazer.Position, lazer.GetFacing());
 	}
 	
-	bool ObjectExists (Coordinate pos, Direction dir)
+	private bool ObjectExists (Coordinate pos, Direction dir)
 	{
 		List<Coordinate> coordinates = new List<Coordinate>(Singletons.GRID.objects.Keys);
 		//Coordinate trans = turret.TranslateCoordinate (pos);
@@ -93,20 +87,23 @@ public class LazerController : MonoBehaviour {
 	public void ClearPreview(){
 		ClearLazer (previewSections);
 	}
-	
-	public bool firing = false;
 
-	public void Fire(){
-		if(this.turret.IsActive())
-			DrawLazer (this.turret.Position, this.turret.GetFacing(), 1, DestroyTurret, FindRealHit, sections);
+	public void FireLazer(Direction direction){
+		if (IsActive ())
+			DrawLazer (this.Position, direction, 1, DestroyTurret, FindRealHit, sections);
 	}
 
-	public void Preview(){
-		if (!this.turret.IsActive ())
+	private bool IsActive ()
+	{
+		return this.active && !this.destroyed;
+	}
+
+	public void FirePreview(Direction direction){
+		if (!IsActive())
 			return;
 		var range = 0;
-		var facing = this.turret.GetFacing();
-		var position = this.turret.Position;
+		var facing = direction;
+		var position = this.Position;
 
 		while (range < Grid.LAZER_MAX_RANGE || ObjectExists (position, facing)) {
 			position += facing;
@@ -139,7 +136,7 @@ public class LazerController : MonoBehaviour {
 		}
 	}
 
-	PieceObject FindGhostHit (Coordinate position)
+	private PieceObject FindGhostHit (Coordinate position)
 	{
 		var previewPiece = Singletons.GRID.previewPiece;
 		if(!previewPiece.tag.Equals("SafeZone") && position.Equals(previewPiece.Position)){
@@ -213,7 +210,7 @@ public class LazerController : MonoBehaviour {
 		}
 	}
 
-	PieceObject FindRealHit (Coordinate position)
+	private PieceObject FindRealHit (Coordinate position)
 	{
 		PieceObject hit;
 		if (Singletons.GRID.objects.ContainsKey (position) && !(hit = Singletons.GRID.objects [position]).tag.Equals ("SafeZone"))
@@ -221,7 +218,7 @@ public class LazerController : MonoBehaviour {
 		return  null;
 	}
 
-	void DestroyTurret (PieceObject hit)
+	private void DestroyTurret (PieceObject hit)
 	{
 		if(hit.GetPieceType() == Piece.PieceType.Turret) {
 		   hit.GetComponent<Turret> ().Explode();
@@ -233,7 +230,7 @@ public class LazerController : MonoBehaviour {
 		//LazerStraight lazer = Instantiate(lazerPrefab).GetComponent<LazerStraight>();
 		InitLazer (lazer, pos, facing, alpha, length, container);
 
-		lazer.BringToFront (turret.player.number);
+		lazer.BringToFront (this.player.number);
 
 		return lazer;
 	}
@@ -247,13 +244,13 @@ public class LazerController : MonoBehaviour {
 		//LazerHit lazer = Instantiate(lazerHitPrefab).GetComponent<LazerHit>();
 		InitLazer (lazer, pos, facing, alpha, 0.5f, container);
 
-		lazer.SetLayerOrder (hit, turret.player.number);
+		lazer.SetLayerOrder (hit, this.player.number);
 
 		return lazer;
 	}
 
 	private void InitLazer(LazerDirect lazer, Coordinate pos, Direction facing, float alpha, float length, List<LazerDirect> container){
-		Coordinate translated = turret.ReverseTranslate (pos);
+		Coordinate translated = this.ReverseTranslate (pos);
 		
 		lazer.transform.parent = this.transform;
 		lazer.transform.localPosition = Vector2.zero;
@@ -274,8 +271,16 @@ public class LazerController : MonoBehaviour {
 		var lazer = InstantiateHitAt (position, direction.Reverse(), alpha, container);
 		lazer.SetTurn (false);
 		lazer.SetLayer ("AccessoryBelow");
-		lazer.SendToBack (turret.player.number);
+		lazer.SendToBack (this.player.number);
 		return lazer;
+	}
+
+	private Coordinate TranslateCoordinate(Coordinate pos){
+		return pos + this.Position;
+	}
+	
+	private Coordinate ReverseTranslate(Coordinate pos){
+		return pos - this.Position;
 	}
 }
 

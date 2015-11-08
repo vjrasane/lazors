@@ -1,12 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-public class Turret : PieceObject {
-
-	public Player player;
+public class Turret : LazerController {
 
 	private Transform gun;
-	private LazerController lazer;
 	private Direction facing = Direction.LEFT;
 	
 	public GameObject explosionPrefab;
@@ -20,16 +17,10 @@ public class Turret : PieceObject {
 	private SpriteRenderer baseShadowRenderer;
 	private SpriteRenderer gunShadowRenderer;
 
-	private bool destroyed = false;
-
-	private bool active = true;
-
-	// Use this for initialization
 	void Awake () {
-		gun = this.transform.FindChild ("gun");
+		base.Init ();
 
-		this.lazer = this.GetComponent<LazerController> ();
-		this.lazer.turret = this;
+		gun = this.transform.FindChild ("gun");
 
 		this.baseRenderer = this.GetComponent<SpriteRenderer> ();
 		this.gunRenderer = this.gun.GetComponent<SpriteRenderer> ();
@@ -46,10 +37,6 @@ public class Turret : PieceObject {
 		gunRenderer.color = normalColor;
 	}
 
-	public void Fire(){
-		lazer.Fire ();
-	}
-
 	public void RotateGun(Direction facing){
 		gun.Rotate (new Vector3(0,0,this.facing.angle(facing)));
 		this.facing = facing;
@@ -61,25 +48,21 @@ public class Turret : PieceObject {
 	
 	void Update(){
 		if (Input.GetKeyDown (KeyCode.Space)) {
-			active = !active && !destroyed;
-			lazer.Fire ();
+			this.active = !active && !destroyed;
+			this.Fire ();
 		}
 
 		HandleExplode ();
 	}
 
-	public bool IsActive(){
-		return active && !destroyed;
+	public void Fire ()
+	{
+		this.FireLazer (this.facing);
 	}
 
 	public void ShowPreview ()
 	{
-		this.lazer.Preview ();
-	}
-
-	public void ClearPreview ()
-	{
-		this.lazer.ClearPreview ();
+		this.FirePreview (this.facing);
 	}
 
 	void HandleExplode ()
@@ -105,21 +88,13 @@ public class Turret : PieceObject {
 				baseRenderer.color = destroyedColor;
 				gunRenderer.color = destroyedColor;
 
-				lazer.CeaseFire();
-				lazer.ClearPreview();
+				this.CeaseFire();
+				this.ClearPreview();
 
 				exploding = false;
 				destroyed = true;
 			}
 		}
-	}
-
-	public Coordinate TranslateCoordinate(Coordinate pos){
-		return pos + this.Position;
-	}
-
-	public Coordinate ReverseTranslate(Coordinate pos){
-		return pos - this.Position;
 	}
 
 	private float explodeTime = 0.0f;

@@ -1,7 +1,3 @@
 # lazors
 
-Is game
-
-Much interactive
-
-Very strategy
+![](lazors.gif)

@@ -103,7 +103,7 @@ public class Turret : LazerController {
 	public void Explode(){
 		if (this.destroyed || this.exploding)
 			return;
-
+		this.player.defeat ();
 		this.exploding = true;
 	}
 

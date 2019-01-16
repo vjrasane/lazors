@@ -24,9 +24,14 @@ public abstract class PieceObject : PositionalObject {
 			HandleRotate ();
 	}
 
+	public bool IsActivatable ()
+	{
+		return GameSettings.ALLOWED_ACTIVATES.Contains (this.GetPieceType ());
+	}
+
 	public void OnClick ()
 	{
-		if (GameSettings.ALLOWED_ACTIVATES.Contains (this.GetPieceType ()))
+		if (this.IsActivatable())
 			HandleClick ();
 		if (Singletons.GRID.squares [this.Position].hover)
 			HandleHover ();

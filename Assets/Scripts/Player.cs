@@ -8,20 +8,27 @@ public class Player
 	public Color color;
 	public bool defeated = false;
 
-	public Player(string name){
+	public Player (string name)
+	{
 		this.name = name;
 	}
 
-	public Player(string name, int number){
+	public Player (string name, int number)
+	{
 		this.name = name;
 		this.number = number;
 	}
 
-	public Player(string name, int number, Color color){
+	public Player (string name, int number, Color color)
+	{
 		this.name = name;
 		this.number = number;
 		this.color = color;
 	}
 
+	public void defeat ()
+	{
+		this.defeated = true;
+	}
 }
 

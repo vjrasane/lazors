@@ -108,7 +108,8 @@ public abstract class LazerController : PlayerObject {
 		while (range < Grid.LAZER_MAX_RANGE || ObjectExists (position, facing)) {
 			position += facing;
 
-			PieceObject hit, preview;
+			PieceObject hit = null;
+			PieceObject preview = null;
 			while((preview = FindGhostHit(position)) == null 
 			      && (hit = FindRealHit(position)) == null 
 			      && (range < Grid.LAZER_MAX_RANGE || ObjectExists (position, facing))){

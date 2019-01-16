@@ -24,6 +24,7 @@ public abstract class Piece {
 		public override PieceType GetPieceType() {
 			return PieceType.Turret;
 		}
+
 	}
 	
 	public class SafeZone : Piece {
@@ -33,6 +34,7 @@ public abstract class Piece {
 		public override PieceType GetPieceType() {
 			return PieceType.SafeZone;
 		}
+
 	}
 	
 	public class Mirror : Piece {

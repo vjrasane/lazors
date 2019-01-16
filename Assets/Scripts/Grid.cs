@@ -96,7 +96,7 @@ public class Grid : MonoBehaviour {
 			}); 
 
 			Singletons.UI.DisplayWelcomeText ();
-			Singletons.UI.DisplayTurnText (inTurn.name);
+			DisplayTurnText();
 
 			return true;
 		};
@@ -128,8 +128,6 @@ public class Grid : MonoBehaviour {
 				if(done[i])
 					onUpdate.RemoveAt(i);
 		}
-
-
 	}
 
 	void HandleDroppers ()
@@ -148,17 +146,34 @@ public class Grid : MonoBehaviour {
 		dropElapsed = Mathf.Min (dropElapsed + Time.deltaTime, Constants.DROP_INTERVAL);
 	}
 
-	public void ChangeTurn(){
+	public void ChangeTurn()
+	{
 		turnDone = true;
+	}
+
+	private Player GetNextPlayer(Player player)
+	{
+		var next = (this.players.IndexOf(player) + 1) % this.players.Count;
+		return this.players[next];
+	}
+
+	private void DisplayTurnText()
+	{	
+		var text = inTurn.name + "'s turn";
+		var defeated = this.players.Where (p => p.defeated).ToArray ();
+		if (defeated.Count() == 1) 
+			text = GetNextPlayer (defeated.First()).name + " wins!";
+		else if(defeated.Count() == 2)
+			text = "Draw!";
+		Singletons.UI.DisplayTurnText (text);
 	}
 
 	public void CheckTurn ()
 	{
 		if (turnDone) {
-			var next = (this.players.IndexOf(inTurn) + 1) % this.players.Count;
-			inTurn = this.players[next];
+			inTurn = GetNextPlayer(inTurn);
 			turnDone = false;
-			Singletons.UI.DisplayTurnText (inTurn.name);
+			DisplayTurnText ();
 		}
 	}
 
@@ -228,13 +243,17 @@ public class Grid : MonoBehaviour {
 
 	private Queue<Scenario.Move> prevMoves = new Queue<Scenario.Move> ();
 
-	public void Activate(Coordinate position){
-		var move = new Scenario.Activate (position, inTurn);
-		this.scenario.moves.Enqueue (move);
+	public void Activate(Coordinate position)
+	{
+		var obj = this.objects [position];
+		if (obj.IsActivatable ()) {
+			var move = new Scenario.Activate (position, inTurn);
+			this.scenario.moves.Enqueue (move);
 
-		CycleMoveColors (move);
+			CycleMoveColors (move);
 
-		this.objects [position].OnClick ();
+			this.objects [position].OnClick ();
+		}
 	}
 
 	public void Place(Coordinate position){
@@ -267,9 +286,9 @@ public class Grid : MonoBehaviour {
 
 		ChangeTurn ();
 		DrawSquares ();
-		dropper.onDone = ()=>{
-			CheckTurn ();
+		dropper.onDone = () => {
 			FireTurrets();
+			CheckTurn ();
 			square.piece = dropper.obj;
 			if(square.hover)
 				square.ShowPreview();
@@ -295,7 +314,8 @@ public class Grid : MonoBehaviour {
 
 	public void HidePreview(){
 		previewPiece.Position = null;
-		previewPiece.gameObject.SetActive (false);
+		if(previewPiece.gameObject != null)
+			previewPiece.gameObject.SetActive (false);
 	}
 
 	public void PreviewLazers(){

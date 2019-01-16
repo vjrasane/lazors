@@ -11,7 +11,6 @@ public class UIController : MonoBehaviour {
 	private Animator welcomeTextAnim;
 	private Animator turnTextAnim;
 
-
 	public float labelOffset = 0.0f;
 
 	private Dictionary<Text, Transform> playerLabelPositions = new Dictionary<Text, Transform>();
@@ -31,9 +30,9 @@ public class UIController : MonoBehaviour {
 		welcomeTextAnim.SetTrigger ("Enter");
 	}
 
-	public void DisplayTurnText(string playerName){
+	public void DisplayTurnText(string text){
 		turnTextAnim.SetTrigger ("Enter");
-		turnText.playerName = playerName;
+		turnText.text = text;
 	}
 
 	// Update is called once per frame
